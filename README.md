@@ -94,11 +94,6 @@ plus-50-or-70-years, but not universally), so `CopyrightExpired` takes an option
 if you're asserting the work is public domain more broadly (e.g. clearly pre-1900 with no
 plausible live copyright anywhere).
 
-All built-in license text is produced by direct Kotlin string interpolation of the
-constructor arguments you pass (`"...$elementLicensed by $author..."`), not by
-search-and-replace over a placeholder template — there's no `{YEAR}`/`{AUTHOR}` token
-syntax to get wrong or leave unreplaced.
-
 `isCopyleft` is `true` for `Gpl2`, `Gpl3`, `Lgpl2_1`, `Lgpl3`, `Mpl2` — anything with
 reciprocal/share-alike source-disclosure obligations. LGPL and MPL are *weak* copyleft
 (obligations apply per-file/per-library, not to your whole program) versus GPL's *strong*
@@ -155,8 +150,8 @@ check (§3.3, §3.5, §3.6) applies to that unioned set.
 3. For each unique coordinate, fetches its POM and reads `<licenses><license>` entries.
 4. Matches the license name/URL against a table of common SPDX identifiers and known name
    variants (e.g. `"The Apache Software License, Version 2.0"` → `Apache2`).
-5. Anything that can't be matched, and has no override (§3), **fails the build** — see
-   §3.3. Anything copyleft, and not allow-listed, also fails the build by default — see
+5. Anything that can't be matched, and has no override (§3), **fails the build** by default — see
+   §3.3. Anything copyleft, and not allow-listed, also **fails the build** by default — see
    §3.5.
 6. Copies required notices into `THIRD-PARTY-NOTICES` — see §3.4.
 7. Once every dependency is resolved (matched, overridden, or ignored) and no failure was
@@ -219,9 +214,7 @@ those cases, if a repository/source URL is available (Maven's POM `<scm>`, npm's
 `repository`, a podspec's `source`/`homepage`, or SPM's `Package.resolved` URL directly),
 `bestEffortLicenseFetch = true` (default `false`) makes the plugin fetch that repo's root
 at the resolved revision, look for a `LICENSE`/`LICENSE.md` file, and pattern-match its
-content against known license texts, across *all four* ecosystems uniformly — not a
-SPM-specific setting, since the underlying gap (missing/absent field, but a repo URL to
-fall back on) is the same shape everywhere it comes up.
+content against known license texts.
 
 This is opt-in because it adds network I/O and a new failure mode (repo unreachable) to
 what's otherwise an offline, deterministic build step, and heuristic text-matching can
@@ -269,9 +262,7 @@ linkedLicense {
 
 ### 3.1 The override file (`linkedlicense.toml`)
 
-Overrides live in their own version-catalog-shaped TOML file, not inline in
-`build.gradle.kts` — reviewable and diffable in PRs the same way `libs.versions.toml`
-already is.
+Overrides live in their own version-catalog-shaped TOML file.
 
 ```toml
 [overrides]
