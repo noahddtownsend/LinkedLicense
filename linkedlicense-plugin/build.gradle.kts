@@ -1,7 +1,11 @@
+import com.vanniktech.maven.publish.GradlePublishPlugin
+
 plugins {
     `java-gradle-plugin`
     `maven-publish`
     id("org.jetbrains.kotlin.jvm")
+    alias(libs.plugins.vanniktechMavenPublish)
+    alias(libs.plugins.gradlePluginPublish)
 }
 
 group = "dev.noahtownsend"
@@ -12,10 +16,67 @@ kotlin {
 }
 
 gradlePlugin {
+    // Required by com.gradle.plugin-publish for Plugin Portal publishing.
+    website = "https://github.com/noahddtownsend/LinkedLicense"
+    vcsUrl = "https://github.com/noahddtownsend/LinkedLicense"
+
     plugins {
         create("linkedLicense") {
             id = "dev.noahtownsend.linkedlicense"
             implementationClass = "dev.noahtownsend.linkedlicense.plugin.LinkedLicensePlugin"
+            displayName = "LinkedLicense Gradle Plugin"
+            description = "Scans your project's dependency graph and generates a license catalog for you."
+            tags = listOf("licenses", "compliance", "kotlin-multiplatform")
+        }
+    }
+}
+
+// Publishes this plugin's `pluginMaven` publication to Maven Central via the Central Portal,
+// on top of the java-gradle-plugin/maven-publish setup above (unrelated to, and additional to,
+// the `functionalTest` local-repo publishing below - that wiring is untouched). Credentials and
+// signing come from environment variables only - see the root build script's `mavenPublishing`
+// block for the full convention notes.
+mavenPublishing {
+    // Both java-gradle-plugin and com.gradle.plugin-publish are applied to this module, so the
+    // vanniktech plugin's auto-detection needs an explicit hint - GradlePublishPlugin (rather
+    // than the plain GradlePlugin) is what it docs as correct for that combination.
+    configure(GradlePublishPlugin())
+    publishToMavenCentral()
+
+    // See the root build script's `mavenPublishing` block for why this is conditional - this
+    // module's `functionalTest` task (below) depends on local-repo publish tasks that must keep
+    // working without any signing credentials present.
+    if (project.findProperty("signingInMemoryKey") != null) {
+        signAllPublications()
+    }
+
+    pom {
+        name = "LinkedLicense Gradle Plugin"
+        description =
+            "A Kotlin Multiplatform library of open-source license templates, plus an opt-in " +
+                "Gradle plugin that scans your project's dependency graph and generates the " +
+                "license catalog for you."
+        url = "https://github.com/noahddtownsend/LinkedLicense"
+
+        licenses {
+            license {
+                name = "MIT"
+                url = "https://github.com/noahddtownsend/LinkedLicense/blob/main/LICENSE"
+            }
+        }
+
+        developers {
+            developer {
+                id = "noahddtownsend"
+                name = "Noah Townsend"
+                email = "noah@noahtownsend.com"
+            }
+        }
+
+        scm {
+            connection = "scm:git:git://github.com/noahddtownsend/LinkedLicense.git"
+            developerConnection = "scm:git:git://github.com/noahddtownsend/LinkedLicense.git"
+            url = "https://github.com/noahddtownsend/LinkedLicense"
         }
     }
 }
