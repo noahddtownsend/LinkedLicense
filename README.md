@@ -123,7 +123,14 @@ plugins {
 ```
 
 This registers one task per Kotlin source set: **`generateLicenseCatalog`** (e.g.
-`generateCommonMainLicenseCatalog`).
+`generateCommonMainLicenseCatalog`). In a Kotlin Multiplatform project, every platform
+source set (`jvmMain`, `androidMain`, `iosMain`, …) has its own resolvable classpath and
+gets scanned independently. `commonMain` isn't itself tied to one platform's dependency
+graph, so its catalog is the **union** of every platform target's resolved coordinates —
+this is deliberately the more expensive, more correct option: a dependency that only exists
+on one target (e.g. an iOS-only binding) still shows up, rather than being silently missed
+because some other target happened to be picked as "the" reference classpath. Every fail-fast
+check (§3.3, §3.5, §3.6) applies to that unioned set.
 
 ### 2.1 What the task does
 
