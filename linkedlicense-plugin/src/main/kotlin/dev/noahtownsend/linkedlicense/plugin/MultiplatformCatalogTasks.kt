@@ -69,7 +69,14 @@ internal object MultiplatformCatalogTasks {
                 // [assets] entries (README §3.7) aren't tied to any one target - they belong to
                 // commonMain only, not repeated in every platform target's own catalog.
                 task.doLast {
-                    CatalogTaskExecution.generateCatalog(project, extension, configuration, outputDir, includeAssets = false)
+                    CatalogTaskExecution.generateCatalog(
+                        project = project,
+                        extension = extension,
+                        configuration = configuration,
+                        outputDir = outputDir,
+                        includeAssets = false,
+                        npmNodeModulesDir = NpmNodeModulesLocator.locate(project, sourceSetName),
+                    )
                 }
             }
 

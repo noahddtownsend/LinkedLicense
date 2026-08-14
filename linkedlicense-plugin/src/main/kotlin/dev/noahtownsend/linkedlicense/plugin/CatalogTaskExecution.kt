@@ -8,7 +8,14 @@ import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedArtifactResult
 import org.gradle.maven.MavenModule
 import org.gradle.maven.MavenPomArtifact
+import dev.noahtownsend.linkedlicense.License
+import kotlin.reflect.KClass
 import java.io.File
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.time.Duration
 
 /**
  * The `generateLicenseCatalog`/`generate<SourceSet>LicenseCatalog` task bodies (resolution,
@@ -30,11 +37,28 @@ internal object CatalogTaskExecution {
         configuration: Configuration,
         outputDir: File,
         includeAssets: Boolean,
+        /**
+         * npm scanning (README §2.3): the `node_modules` directory KGP installed this source
+         * set's declared `npm(...)` dependencies into, if this is a `jsMain`/`wasmJsMain`
+         * source set with any. `null`/non-existent means "nothing to scan" - not an error.
+         */
+        npmNodeModulesDir: File? = null,
     ) {
         OverridesFileScaffold.ensureExists(extension.overridesFile)
 
         val componentIds = collectResolvedComponents(configuration.incoming.resolutionResult.root)
-        generateCatalogFromComponents(project, extension, componentIds, listOf(configuration), outputDir, includeAssets)
+        val npmPackageInfo = npmNodeModulesDir?.let { scanNpmPackageInfo(it) }.orEmpty()
+
+        generateCatalogFromComponents(
+            project = project,
+            extension = extension,
+            componentIds = componentIds,
+            extraCoordinates = npmPackageInfo.keys.toList(),
+            extraPomInfo = npmPackageInfo.mapValues { (_, info) -> info.toPomInfo() },
+            configurations = listOf(configuration),
+            outputDir = outputDir,
+            includeAssets = includeAssets,
+        )
     }
 
     /**
@@ -63,6 +87,8 @@ internal object CatalogTaskExecution {
             project = project,
             extension = extension,
             componentIds = componentsByCoordinate.values.toList(),
+            extraCoordinates = emptyList(),
+            extraPomInfo = emptyMap(),
             configurations = configurations,
             outputDir = outputDir,
             includeAssets = true,
@@ -73,16 +99,27 @@ internal object CatalogTaskExecution {
         project: Project,
         extension: LinkedLicenseExtension,
         componentIds: List<ModuleComponentIdentifier>,
+        /** Non-Maven coordinates (npm/CocoaPods/SPM, README §2.3) folded into the same pipeline. */
+        extraCoordinates: List<Coordinate>,
+        /** [PomInfo]-shaped license/repo info for each of [extraCoordinates]. */
+        extraPomInfo: Map<Coordinate, PomInfo>,
         configurations: List<Configuration>,
         outputDir: File,
         includeAssets: Boolean,
     ) {
-        val coordinates = componentIds.map { it.toCoordinate() }
+        val coordinates = componentIds.map { it.toCoordinate() } + extraCoordinates
 
         val overrides =
             TomlOverridesParser.parse(extension.overridesFile) { alias -> resolveVersionCatalogAlias(project, alias) }
 
-        val pomInfoCache = resolvePomInfo(project, componentIds)
+        val pomInfoCache = resolvePomInfo(project, componentIds) + extraPomInfo
+
+        val bestEffortFetch: ((String, String) -> KClass<out License>?)? =
+            if (extension.bestEffortLicenseFetch) {
+                { repoUrl, ref -> BestEffortLicenseFetch.guessLicense(repoUrl, ref, ::fetchUrlBody) }
+            } else {
+                null
+            }
 
         val result =
             CatalogGenerator.resolve(
@@ -92,6 +129,18 @@ internal object CatalogTaskExecution {
                 failOnCopyleft = extension.failOnCopyleft,
                 failOnUnknown = extension.failOnUnknown,
                 includeAssets = includeAssets,
+                bestEffortFetch = bestEffortFetch,
+                onBestGuess = { coordinate, kClass ->
+                    if (!overrides.suppressBestGuessWarnings.containsKey(coordinate.moduleId)) {
+                        project.logger.warn(
+                            "linkedlicense: best-effort guess for ${coordinate.moduleId} -> " +
+                                "${BuiltInLicenses.simpleNameOf(kClass)} (unverified - fetched from its repository " +
+                                "and pattern-matched, not read from a structured license field). Silence this " +
+                                "warning with a [suppress-best-guess-warnings] entry in ${extension.overridesFile.path} " +
+                                "once verified.",
+                        )
+                    }
+                },
             )
 
         if (result.unresolved.isNotEmpty()) {
@@ -240,4 +289,13 @@ internal object CatalogTaskExecution {
 
         return "${module.group}:${module.name}"
     }
+
+    /** A real HTTPS GET, used only when `bestEffortLicenseFetch = true` (README §2.3). */
+    private fun fetchUrlBody(url: String): String? =
+        runCatching {
+            val client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build()
+            val request = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(10)).GET().build()
+            val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+            if (response.statusCode() in 200..299) response.body() else null
+        }.getOrNull()
 }

@@ -10,10 +10,15 @@ data class PomLicense(
     val url: String?,
 )
 
-/** Also carries the POM's `<organization><name>`, used as a codegen fallback for `author`. */
+/**
+ * Also carries the POM's `<organization><name>`, used as a codegen fallback for `author`, and
+ * `<scm><url>`, which feeds the best-effort fallback (README §2.3) when no `<licenses>` entry
+ * matches.
+ */
 data class PomInfo(
     val licenses: List<PomLicense>,
     val organizationName: String?,
+    val scmUrl: String? = null,
 )
 
 private val EMPTY_POM_INFO = PomInfo(licenses = emptyList(), organizationName = null)
@@ -42,7 +47,15 @@ fun parsePomLicenses(pomFile: File): PomInfo {
             ?.trim()
             ?.takeIf { it.isNotEmpty() }
 
-    val licensesElement = root.directChild("licenses") ?: return PomInfo(emptyList(), organizationName)
+    val scmUrl =
+        root
+            .directChild("scm")
+            ?.directChild("url")
+            ?.textContent
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+
+    val licensesElement = root.directChild("licenses") ?: return PomInfo(emptyList(), organizationName, scmUrl)
 
     val licenses =
         licensesElement.directChildren("license").map { licenseElement ->
@@ -52,7 +65,7 @@ fun parsePomLicenses(pomFile: File): PomInfo {
             )
         }
 
-    return PomInfo(licenses, organizationName)
+    return PomInfo(licenses, organizationName, scmUrl)
 }
 
 private fun Element.directChild(tag: String): Element? = directChildren(tag).firstOrNull()
