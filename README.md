@@ -65,6 +65,7 @@ alongside scanned dependencies without hand-merging two lists yourself.
 | `License.OpenGovernmentLicence` | `jurisdiction: String`, `version: OglVersion` | `false` |
 | `License.PublicDomain` | — | `false` |
 | `License.UsGovernmentPublicDomain` | — | `false` |
+| `License.CopyrightExpired` | `jurisdiction: String? = null` | `false` |
 | `License.Odbl` | — | `false`\*\* |
 | `License.Custom` | `text: String` | `false` (escape hatch for anything not listed above) |
 
@@ -82,6 +83,17 @@ V2_0 | V2_5 | V3_0 | V4_0`. `OglVersion` is `V1_0 | V2_0 | V3_0` (the UK Open Go
 Licence's three published versions). These are closed, known sets, so they're modeled as
 enums rather than free-form version strings — a typo like `"4.O"` (letter O) fails to
 compile instead of silently generating a broken `creativecommons.org` URL at runtime.
+
+Three built-in types cover different reasons something is in the public domain — don't use
+them interchangeably: `PublicDomain` is a voluntary dedication (the rights holder waived
+them, CC0-style); `UsGovernmentPublicDomain` is for US federal government works, exempt from
+copyright by statute (17 U.S.C. § 105); `CopyrightExpired` is for works whose copyright term
+has simply run out under applicable law — nobody dedicated or exempted anything, the
+protection period ended. Copyright terms vary by jurisdiction (commonly life-of-the-author-
+plus-50-or-70-years, but not universally), so `CopyrightExpired` takes an optional
+`jurisdiction` param to state which jurisdiction's term you're relying on; leave it `null`
+if you're asserting the work is public domain more broadly (e.g. clearly pre-1900 with no
+plausible live copyright anywhere).
 
 All built-in license text is produced by direct Kotlin string interpolation of the
 constructor arguments you pass (`"...$elementLicensed by $author..."`), not by
