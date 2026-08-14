@@ -17,6 +17,12 @@ version = "0.9.0"
 // only (ORG_GRADLE_PROJECT_mavenCentralUsername/Password, ORG_GRADLE_PROJECT_signingInMemory*)
 // - see this repo's publish-config notes; nothing here reads a file or prompts interactively.
 mavenPublishing {
+    // Without this, the artifactId defaults to `project.name`, which is `rootProject.name`
+    // ("LinkedLicense", capitalized - see settings.gradle.kts) for the root project. Force
+    // the lowercase artifactId this README and every consumer (including TrekOn's own
+    // integration branch) already documents/references: dev.noahtownsend:linkedlicense.
+    coordinates(groupId = "dev.noahtownsend", artifactId = "linkedlicense", version = version.toString())
+
     publishToMavenCentral()
 
     // Only sign when an in-memory signing key is actually supplied (ORG_GRADLE_PROJECT_
