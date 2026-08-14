@@ -5,12 +5,17 @@ import org.gradle.testkit.runner.GradleRunner
 import java.io.File
 
 /**
- * A disposable Gradle project applying the plugin under test (injected via
- * `GradleRunner.withPluginClasspath()`) plus `org.jetbrains.kotlin.jvm`, wired against a
- * [MavenFixtureRepo].
+ * A disposable Gradle project applying the plugin under test plus a Kotlin Gradle plugin
+ * (`org.jetbrains.kotlin.jvm` or `.multiplatform`), wired against a [MavenFixtureRepo].
  *
- * Functional tests here run only the `generateLicenseCatalog` task (not `build`) and assert
- * on its outcome / the generated source text - they don't compile the generated
+ * Plain-JVM fixtures ([writeSettings]/[writeBuildFile]) inject the plugin under test via
+ * `GradleRunner.withPluginClasspath()` and run with [run]/[runAndFail]. Multiplatform fixtures
+ * ([writeSettingsForPublishedPlugin]/[writeMultiplatformBuildFile]) instead resolve it from a
+ * local Maven repo and run with [runPublished]/[runPublishedAndFail] - see
+ * [writeMultiplatformBuildFile]'s doc for why the two need different injection mechanisms.
+ *
+ * Functional tests here run only `generate*LicenseCatalog` tasks (not `build`) and assert on
+ * their outcome / the generated source text - they don't compile the generated
  * `GeneratedLicenses.kt` against the real `dev.noahtownsend:linkedlicense` artifact, since
  * that library isn't published anywhere a fixture build could resolve it from. Simplification
  * flagged in the report.
@@ -54,6 +59,32 @@ class FixtureProject(
         )
     }
 
+    /**
+     * Like [writeSettings], but resolves the plugin under test from the local Maven repo
+     * `functionalTest` publishes to (`linkedlicense-plugin/build.gradle.kts`) instead of relying
+     * on `GradleRunner.withPluginClasspath()`. Required for Kotlin Multiplatform fixtures - see
+     * [writeMultiplatformBuildFile]'s doc for why.
+     */
+    fun writeSettingsForPublishedPlugin() {
+        val repoDir = requireNotNull(System.getProperty("linkedlicense.functionalTestRepo")) {
+            "linkedlicense.functionalTestRepo system property not set - run via the functionalTest Gradle task."
+        }
+
+        File(projectDir, "settings.gradle.kts").writeText(
+            """
+            |rootProject.name = "fixture"
+            |
+            |pluginManagement {
+            |    repositories {
+            |        maven { url = uri("$repoDir") }
+            |        gradlePluginPortal()
+            |        mavenCentral()
+            |    }
+            |}
+            """.trimMargin(),
+        )
+    }
+
     fun writeBuildFile(
         dependencyCoordinates: List<String>,
         linkedLicenseBlock: String = "",
@@ -81,6 +112,65 @@ class FixtureProject(
         )
     }
 
+    /**
+     * A Kotlin Multiplatform equivalent of [writeBuildFile]: declares a `jvm()` target and one
+     * other platform target (e.g. `iosX64()`), each with its own dependency set, so functional
+     * tests can assert per-target catalogs differ and `commonMain`'s is their union.
+     *
+     * Requires [writeSettingsForPublishedPlugin], not [writeSettings]: applying
+     * `kotlin("multiplatform")` alongside a plugin injected via
+     * `GradleRunner.withPluginClasspath()` (as [writeBuildFile]'s plain-JVM fixtures do) doesn't
+     * exercise the same runtime classloader sharing a real consumer gets from resolving both
+     * plugins together through the normal `plugins {}` DSL, so it throws NoClassDefFoundError
+     * even though the underlying compileOnly fix (`linkedlicense-plugin/build.gradle.kts`)
+     * genuinely works - confirmed separately via a real `includeBuild` consumer project.
+     */
+    fun writeMultiplatformBuildFile(
+        otherTargetDsl: String,
+        otherTargetSourceSetName: String,
+        jvmDependencyCoordinates: List<String> = emptyList(),
+        otherTargetDependencyCoordinates: List<String> = emptyList(),
+        commonDependencyCoordinates: List<String> = emptyList(),
+        linkedLicenseBlock: String = "",
+    ) {
+        val pluginVersion = System.getProperty("linkedlicense.version") ?: "0.1.0"
+
+        File(projectDir, "build.gradle.kts").writeText(
+            """
+            |import java.net.URI
+            |
+            |plugins {
+            |    kotlin("multiplatform") version "2.3.21"
+            |    id("dev.noahtownsend.linkedlicense") version "$pluginVersion"
+            |}
+            |
+            |repositories {
+            |    maven { url = URI.create("${repo.dir.toURI()}") }
+            |    mavenCentral()
+            |}
+            |
+            |kotlin {
+            |    jvm()
+            |    $otherTargetDsl
+            |
+            |    sourceSets {
+            |        commonMain.dependencies {
+            ${commonDependencyCoordinates.joinToString("\n") { "|            implementation(\"$it\")" }}
+            |        }
+            |        jvmMain.dependencies {
+            ${jvmDependencyCoordinates.joinToString("\n") { "|            implementation(\"$it\")" }}
+            |        }
+            |        $otherTargetSourceSetName.dependencies {
+            ${otherTargetDependencyCoordinates.joinToString("\n") { "|            implementation(\"$it\")" }}
+            |        }
+            |    }
+            |}
+            |
+            $linkedLicenseBlock
+            """.trimMargin(),
+        )
+    }
+
     fun writeOverridesToml(toml: String) {
         File(projectDir, "linkedlicense.toml").writeText(toml)
     }
@@ -91,6 +181,17 @@ class FixtureProject(
     fun runAndFail(vararg tasks: String): BuildResult =
         runner(*tasks).buildAndFail()
 
+    /**
+     * For fixtures built with [writeMultiplatformBuildFile]/[writeSettingsForPublishedPlugin]:
+     * resolves the plugin under test from the local Maven repo instead of injecting it via
+     * `GradleRunner.withPluginClasspath()`. See [writeMultiplatformBuildFile]'s doc for why.
+     */
+    fun runPublished(vararg tasks: String): BuildResult =
+        publishedPluginRunner(*tasks).build()
+
+    fun runPublishedAndFail(vararg tasks: String): BuildResult =
+        publishedPluginRunner(*tasks).buildAndFail()
+
     private fun runner(vararg tasks: String): GradleRunner =
         GradleRunner
             .create()
@@ -99,8 +200,21 @@ class FixtureProject(
             .withArguments(tasks.toList() + listOf("--stacktrace"))
             .forwardOutput()
 
+    private fun publishedPluginRunner(vararg tasks: String): GradleRunner =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(tasks.toList() + listOf("--stacktrace"))
+            .forwardOutput()
+
     fun generatedLicensesFile(): File =
         File(projectDir, "build/generated/linkedlicense/main/dev/noahtownsend/linkedlicense/generated/GeneratedLicenses.kt")
+
+    fun generatedLicensesFile(sourceSetName: String): File =
+        File(
+            projectDir,
+            "build/generated/linkedlicense/$sourceSetName/dev/noahtownsend/linkedlicense/generated/GeneratedLicenses.kt",
+        )
 
     fun thirdPartyNoticesFile(): File = File(projectDir, "THIRD-PARTY-NOTICES")
 }
