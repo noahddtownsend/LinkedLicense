@@ -159,4 +159,48 @@ class TomlOverridesParserTest {
 
         assertEquals(emptyMap(), config.assets)
     }
+
+    @Test
+    fun `parse() reads suppress-best-guess-warnings entries with ecosystem-prefixed keys`() {
+        val config =
+            parse(
+                """
+                [suppress-best-guess-warnings]
+                "spm:https://github.com/apple/swift-log" = "Verified 2026-08-14: Apache-2.0 LICENSE at tag 1.5.3."
+                """.trimIndent(),
+            )
+
+        assertEquals(
+            "Verified 2026-08-14: Apache-2.0 LICENSE at tag 1.5.3.",
+            config.suppressBestGuessWarnings["spm:https://github.com/apple/swift-log"],
+        )
+    }
+
+    @Test
+    fun `parse() defaults suppress-best-guess-warnings to empty when absent`() {
+        val config = parse("[ignored]\n\"com.example:x\" = \"reason\"")
+
+        assertEquals(emptyMap(), config.suppressBestGuessWarnings)
+    }
+
+    @Test
+    fun `parse() accepts npm- cocoapods- and spm-prefixed keys in overrides ignored and copyleft-allowed`() {
+        val config =
+            parse(
+                """
+                [overrides]
+                "npm:left-pad" = { license = "MIT" }
+
+                [ignored]
+                "cocoapods:InternalPod" = "Vendored fork."
+
+                [copyleft-allowed]
+                "spm:https://github.com/example/gpl-lib" = "Build-time only."
+                """.trimIndent(),
+            )
+
+        assertTrue(config.overrides.containsKey("npm:left-pad"))
+        assertEquals("Vendored fork.", config.ignored["cocoapods:InternalPod"])
+        assertEquals("Build-time only.", config.copyleftAllowed["spm:https://github.com/example/gpl-lib"])
+    }
 }

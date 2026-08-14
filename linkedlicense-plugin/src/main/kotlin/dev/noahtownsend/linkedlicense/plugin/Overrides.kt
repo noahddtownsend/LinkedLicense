@@ -49,6 +49,13 @@ data class OverridesConfig(
      * `kind = License.Kind.ASSET` — there's no matching/fail-on-unknown step for these.
      */
     val assets: Map<String, OverrideSpec> = emptyMap(),
+    /**
+     * `[suppress-best-guess-warnings]` (README §2.3) — silences the per-build warning the
+     * best-effort fallback would otherwise emit for a coordinate, once its guess has been
+     * manually verified. A reason string is required, same audit-trail pattern as `[ignored]`/
+     * `[copyleft-allowed]`. Suppressing the warning never suppresses the guess itself.
+     */
+    val suppressBestGuessWarnings: Map<String, String> = emptyMap(),
 ) {
     companion object {
         val EMPTY = OverridesConfig()

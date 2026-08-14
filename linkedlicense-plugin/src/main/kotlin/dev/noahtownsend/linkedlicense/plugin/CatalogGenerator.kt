@@ -1,5 +1,8 @@
 package dev.noahtownsend.linkedlicense.plugin
 
+import dev.noahtownsend.linkedlicense.License
+import kotlin.reflect.KClass
+
 /** A coordinate that failed the `[license-policy]` allow/block check (README §3.6). */
 data class PolicyOffender(
     val coordinate: Coordinate,
@@ -46,6 +49,15 @@ object CatalogGenerator {
          * `commonMain` union both pass `true` (the default).
          */
         includeAssets: Boolean = true,
+        /**
+         * README §2.3 best-guess fallback: invoked with a coordinate's known repository URL
+         * and version (used as the fetch ref) when no primary field matched. Returns the
+         * guessed license type, or `null` if nothing could be fetched/matched. `null` overall
+         * (the default) disables the fallback entirely - matches `bestEffortLicenseFetch = false`.
+         */
+        bestEffortFetch: ((repoUrl: String, ref: String) -> KClass<out License>?)? = null,
+        /** Invoked once per coordinate resolved via [bestEffortFetch] - the warning trigger point. */
+        onBestGuess: (Coordinate, KClass<out License>) -> Unit = { _, _ -> },
     ): CatalogResult {
         val entries = mutableListOf<Pair<Coordinate, CatalogEntry>>()
         val unresolved = mutableListOf<Coordinate>()
@@ -112,8 +124,13 @@ object CatalogGenerator {
 
                 null -> {
                     val pomInfo = pomInfoOf(coordinate)
-                    val matched =
+                    val fieldMatched =
                         pomInfo.licenses.firstNotNullOfOrNull { LicenseMatcher.match(it.name, it.url) }
+
+                    val matched =
+                        fieldMatched
+                            ?: pomInfo.scmUrl?.let { repoUrl -> bestEffortFetch?.invoke(repoUrl, coordinate.version) }
+                                ?.also { onBestGuess(coordinate, it) }
 
                     if (matched == null) {
                         if (failOnUnknown) {

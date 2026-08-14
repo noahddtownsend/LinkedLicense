@@ -84,7 +84,21 @@ object TomlOverridesParser {
                     parseOverrideEntry(rawKey, entryTable, file)
                 }
 
-        return OverridesConfig(overrides, ignored, copyleftAllowed, licensePolicy, assets)
+        val suppressTable = result.getTable("suppress-best-guess-warnings")
+        val suppressBestGuessWarnings =
+            suppressTable
+                ?.keySet()
+                .orEmpty()
+                .associate { rawKey ->
+                    val reason =
+                        suppressTable!!.getString(listOf(rawKey))
+                            ?: throw GradleException(
+                                "[suppress-best-guess-warnings] entry '$rawKey' in ${file.path} must be a reason string.",
+                            )
+                    resolveKey(rawKey) to reason
+                }
+
+        return OverridesConfig(overrides, ignored, copyleftAllowed, licensePolicy, assets, suppressBestGuessWarnings)
     }
 
     private fun parseOverrideEntry(

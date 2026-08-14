@@ -7,7 +7,7 @@ import java.io.File
  * `generate<SourceSet>LicenseCatalog` task runs against a project that doesn't have one yet
  * (README §3.1 "Auto-generated on first run"): every table the file supports -
  * `[overrides]`, `[ignored]`, `[copyleft-allowed]`, `[license-policy]`, `[assets]` (§3.7), and
- * `[suppress-best-guess-warnings]` (§2.3, not yet wired to any behavior) - is present with a
+ * `[suppress-best-guess-warnings]` (§2.3) - is present with a
  * header comment and a commented-out example line, so the shape of a table you haven't needed
  * yet never has to be looked up in the README.
  *

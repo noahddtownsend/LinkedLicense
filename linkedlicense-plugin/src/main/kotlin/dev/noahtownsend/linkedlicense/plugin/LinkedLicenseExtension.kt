@@ -33,4 +33,14 @@ open class LinkedLicenseExtension(
      * omitted from `GeneratedLicenses.kt` instead of failing the build. Default: `true`.
      */
     var failOnUnknown: Boolean = true
+
+    /**
+     * Opt-in best-guess fallback (README §2.3): when a dependency's own license field is
+     * missing/unmatched but a repository URL is known, fetch that repo's `LICENSE` file at the
+     * resolved revision and pattern-match its content against known license texts. Applies
+     * uniformly across Maven, npm, CocoaPods, and SPM. Every dependency resolved this way emits
+     * a build warning naming the coordinate and the guessed license, unless silenced via
+     * `[suppress-best-guess-warnings]` in `linkedlicense.toml`. Default: `false`.
+     */
+    var bestEffortLicenseFetch: Boolean = false
 }
