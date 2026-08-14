@@ -181,6 +181,42 @@ for what's actually resolved in *that* project's own dependency graph. Depending
 `License` types; nothing is scanned, generated, or bundled automatically, and no consumer
 is ever forced to ship or display license text for dependencies they don't have.
 
+### 2.3 Ecosystem coverage: npm, CocoaPods, SPM
+
+A Kotlin Multiplatform project can pull in dependencies outside Gradle/Maven entirely —
+npm packages for `js`/`wasmJs` targets, CocoaPods pods and Swift Package Manager packages
+for iOS interop. `generateLicenseCatalog` scans all three, folded into the same per-source-
+set pipeline (§2) and the same `linkedlicense.toml` overrides (§3.1), with the same
+fail-on-unknown/copyleft/policy checks — not a separate bolted-on tool with its own rules.
+
+- **npm** (`jsMain`/`wasmJsMain` source sets with declared npm dependencies): resolved via
+  the generated `package.json`/lockfile, each package's own `package.json` `license` field
+  matched through the same SPDX-name table used for Maven POMs.
+- **CocoaPods** (when the `kotlin-cocoapods` plugin is applied): resolved via `Podfile.lock`,
+  each pod's `.podspec`'s `license` field (string or `{ type, file, text }` object) matched
+  the same way.
+- **SPM**: `Package.resolved` only pins a git URL + revision — there's no license field
+  anywhere in that chain to read, unlike npm/CocoaPods/Maven. By default, every resolved SPM
+  package is treated as unmatched (same fail-on-unknown path as any other unrecognized
+  dependency) — you provide an `[overrides]`/`[ignored]` entry for each. Setting
+  `spmBestEffortLicenseFetch = true` (default `false`) makes the plugin instead fetch each
+  pinned revision's repo root over the network looking for a `LICENSE`/`LICENSE.md` file and
+  pattern-match its content against known license texts — opt-in because it adds network I/O
+  and a new failure mode (repo unreachable) to what's otherwise an offline, deterministic
+  build step, and heuristic text-matching can misfire in ways POM/package.json/podspec field
+  parsing can't.
+
+Every dependency from any of these three ecosystems gets an override-table key prefixed
+with its ecosystem, in the *same* `[overrides]`/`[ignored]`/`[copyleft-allowed]`/
+`[license-policy]` tables Maven coordinates already use (§3.1) — one file, one mental model:
+
+```toml
+[overrides]
+"npm:left-pad" = { license = "MIT" }
+"cocoapods:Alamofire" = { license = "MIT" }
+"spm:https://github.com/apple/swift-log" = { license = "Apache2" }
+```
+
 ## 3. Configuring the plugin
 
 ```kotlin
@@ -189,6 +225,7 @@ linkedLicense {
     copyRequiredNotices = true                 // default shown
     failOnCopyleft = true                      // default shown
     failOnUnknown = true                       // default shown
+    spmBestEffortLicenseFetch = false          // default shown, see §2.3
 }
 ```
 
