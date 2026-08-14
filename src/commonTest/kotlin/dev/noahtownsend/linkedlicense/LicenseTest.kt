@@ -60,6 +60,63 @@ class LicenseTest {
     }
 
     @Test
+    fun `Bsd2Clause licenseText contains year and author substitutions`() {
+        val license = License.Bsd2Clause(elementLicensed = "Foo", author = "Jane Doe", year = "2020")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("2020"))
+        assertTrue(license.licenseText.contains("Jane Doe"))
+        assertFalse(license.isCopyleft)
+    }
+
+    @Test
+    fun `Bsd3Clause licenseText contains year and author substitutions`() {
+        val license = License.Bsd3Clause(elementLicensed = "Foo", author = "Jane Doe", year = "2020")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("2020"))
+        assertTrue(license.licenseText.contains("Jane Doe"))
+        assertTrue(license.licenseText.contains("endorse"))
+        assertFalse(license.isCopyleft)
+    }
+
+    @Test
+    fun `Isc licenseText contains year and author substitutions`() {
+        val license = License.Isc(elementLicensed = "Foo", author = "Jane Doe", year = "2020")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("2020"))
+        assertTrue(license.licenseText.contains("Jane Doe"))
+        assertFalse(license.isCopyleft)
+    }
+
+    @Test
+    fun `Unlicense licenseText is non-blank and not copyleft`() {
+        val license = License.Unlicense(elementLicensed = "Foo", author = "Jane Doe")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("public domain"))
+        assertFalse(license.isCopyleft)
+    }
+
+    @Test
+    fun `PublicDomain licenseText is non-blank and not copyleft`() {
+        val license = License.PublicDomain(elementLicensed = "Foo", author = "Jane Doe")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertFalse(license.isCopyleft)
+    }
+
+    @Test
+    fun `UsGovernmentPublicDomain licenseText references 17 USC 105`() {
+        val license = License.UsGovernmentPublicDomain(elementLicensed = "Foo", author = "U.S. Government")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("17 U.S.C"))
+        assertFalse(license.isCopyleft)
+    }
+
+    @Test
     fun `elementLicensed and author are exposed on the base type`() {
         val license = License.Apache2(elementLicensed = "Ktor", author = "JetBrains", url = "https://ktor.io")
 

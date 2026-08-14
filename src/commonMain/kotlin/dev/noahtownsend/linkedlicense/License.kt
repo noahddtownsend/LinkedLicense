@@ -330,4 +330,175 @@ See the License for the specific language governing permissions and
 limitations under the License."""
         }
     }
+
+    data class Bsd2Clause(
+        override val elementLicensed: String,
+        override val author: String,
+        val year: String,
+        override val url: String? = null,
+    ) : License(elementLicensed, author, url) {
+        override val licenseText: String
+            get() =
+                BSD2_TEMPLATE
+                    .replace("{YEAR}", year)
+                    .replace("{AUTHOR}", author)
+
+        companion object {
+            private const val BSD2_TEMPLATE = """BSD 2-Clause License
+
+Copyright (c) {YEAR}, {AUTHOR}
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."""
+        }
+    }
+
+    data class Bsd3Clause(
+        override val elementLicensed: String,
+        override val author: String,
+        val year: String,
+        override val url: String? = null,
+    ) : License(elementLicensed, author, url) {
+        override val licenseText: String
+            get() =
+                BSD3_TEMPLATE
+                    .replace("{YEAR}", year)
+                    .replace("{AUTHOR}", author)
+
+        companion object {
+            private const val BSD3_TEMPLATE = """BSD 3-Clause License
+
+Copyright (c) {YEAR}, {AUTHOR}
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of {AUTHOR} nor the names of its contributors may be used
+   to endorse or promote products derived from this software without specific
+   prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."""
+        }
+    }
+
+    data class Isc(
+        override val elementLicensed: String,
+        override val author: String,
+        val year: String,
+        override val url: String? = null,
+    ) : License(elementLicensed, author, url) {
+        override val licenseText: String
+            get() =
+                ISC_TEMPLATE
+                    .replace("{YEAR}", year)
+                    .replace("{AUTHOR}", author)
+
+        companion object {
+            private const val ISC_TEMPLATE = """ISC License
+
+Copyright (c) {YEAR}, {AUTHOR}
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE."""
+        }
+    }
+
+    data class Unlicense(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+    ) : License(elementLicensed, author, url) {
+        override val licenseText: String = UNLICENSE_TEXT
+
+        companion object {
+            private const val UNLICENSE_TEXT = """This is free and unencumbered software released into the public domain.
+
+Anyone is free to copy, modify, publish, use, compile, sell, or distribute
+this software, either in source code form or as a compiled binary, for any
+purpose, commercial or non-commercial, and by any means.
+
+In jurisdictions that recognize copyright laws, the author or authors of this
+software dedicate any and all copyright interest in the software to the
+public domain. We make this dedication for the benefit of the public at large
+and to the detriment of our heirs and successors. We intend this dedication
+to be an overt act of relinquishment in perpetuity of all present and future
+rights to this software under copyright law.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+For more information, please refer to <https://unlicense.org>"""
+        }
+    }
+
+    data class PublicDomain(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+    ) : License(elementLicensed, author, url) {
+        override val licenseText: String
+            get() =
+                """Public Domain
+
+$elementLicensed by $author has been dedicated to the public domain. To the extent possible under law, all copyright and related or neighboring rights have been waived. It may be used, copied, modified, and distributed, for any purpose, commercial or non-commercial, without asking permission.${if (url != null) "\nSource / URL: $url" else ""}"""
+    }
+
+    data class UsGovernmentPublicDomain(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+    ) : License(elementLicensed, author, url) {
+        override val licenseText: String
+            get() =
+                """$elementLicensed by $author
+
+As a work of the United States Government, this content is not subject to copyright protection within the United States. See 17 U.S.C. § 105 ("Copyright protection under this title is not available for any work of the United States Government."). It is in the public domain within the United States; use outside the United States may be subject to the copyright laws of other jurisdictions.${if (url != null) "\nSource / URL: $url" else ""}"""
+    }
 }
