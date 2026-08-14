@@ -8,6 +8,64 @@ you — so you never have to hand-type another `NOTICE` entry.
 - **License (of this library's own code)**: MIT. See [`LICENSE`](./LICENSE).
 - **Group / artifact**: `dev.noahtownsend:linkedlicense`.
 
+## Quickstart
+
+```kotlin
+// build.gradle.kts
+dependencies {
+    implementation("dev.noahtownsend:linkedlicense:<version>")
+}
+```
+
+That alone gets you the `License` API (§1) for hand-writing entries yourself — no scanning,
+no build-time tooling, nothing generated. If you also want your dependency graph scanned and
+a catalog generated automatically, apply the plugin too (§2):
+
+```kotlin
+plugins {
+    id("dev.noahtownsend.linkedlicense") version "<version>"
+}
+```
+
+Then, in code:
+
+```kotlin
+// Manual: construct License instances yourself
+val licenses = listOf(
+    License.MIT(elementLicensed = "Kotlin", author = "JetBrains", year = "2011"),
+)
+
+// Or, with the plugin applied: use what generateLicenseCatalog already built for you
+val licenses = GeneratedLicenses.all
+```
+
+To show them in a Compose Multiplatform UI with zero custom screen code, add
+`dev.noahtownsend:linkedlicense-compose` (§5) and drop in the ready-made component:
+
+```kotlin
+LicensesButton(licenses = licenses)
+```
+
+That's a translated "Licenses" row that opens a full-screen, expandable list on tap — the
+whole feature, one line. See the rest of this README for every configuration knob once you
+need one.
+
+## Disclaimer
+
+LinkedLicense is a **tool that helps you track third-party license obligations** — it is not
+a legal service, and using it does not by itself guarantee compliance with any license,
+anywhere. Automated scanning can miss dependencies, misread ambiguous or malformed license
+metadata, or match against the wrong template; best-guess detection (§2.3) is explicitly
+heuristic; the built-in license *templates* are provided for convenience and are not a
+substitute for reading the actual license governing a given dependency. **You, the consumer
+of this library, remain solely responsible for your project's license compliance** —
+reviewing what this library generates, correcting or overriding anything wrong (§3.1), and
+making your own legal judgment calls (consulting counsel where appropriate) — the same way
+you would be responsible for compliance whether or not any tooling was involved. This
+library and its authors accept no liability for compliance failures, misidentified licenses,
+or omissions, consistent with the "AS IS", no-warranty terms of the [MIT license](./LICENSE)
+this project itself is released under.
+
 ## 1. The `License` API (runtime)
 
 `dev.noahtownsend.linkedlicense.License` is an `abstract class`. A closed, built-in set of
