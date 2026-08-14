@@ -6,6 +6,48 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.vanniktechMavenPublish)
+}
+
+group = "dev.noahtownsend"
+version = "0.1.0"
+
+// See the root build script's `mavenPublishing` block for the credentials/signing notes -
+// identical convention applies here.
+mavenPublishing {
+    publishToMavenCentral()
+
+    // See the root build script's `mavenPublishing` block for why this is conditional.
+    if (project.findProperty("signingInMemoryKey") != null) {
+        signAllPublications()
+    }
+
+    pom {
+        name = "LinkedLicense Compose"
+        description = "Ready-made Compose Multiplatform UI components for displaying LinkedLicense catalogs."
+        url = "https://github.com/noahddtownsend/LinkedLicense"
+
+        licenses {
+            license {
+                name = "MIT"
+                url = "https://github.com/noahddtownsend/LinkedLicense/blob/main/LICENSE"
+            }
+        }
+
+        developers {
+            developer {
+                id = "noahddtownsend"
+                name = "Noah Townsend"
+                email = "noah@noahtownsend.com"
+            }
+        }
+
+        scm {
+            connection = "scm:git:git://github.com/noahddtownsend/LinkedLicense.git"
+            developerConnection = "scm:git:git://github.com/noahddtownsend/LinkedLicense.git"
+            url = "https://github.com/noahddtownsend/LinkedLicense"
+        }
+    }
 }
 
 kotlin {
