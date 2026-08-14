@@ -113,9 +113,13 @@ class FixtureProject(
     }
 
     /**
-     * A Kotlin Multiplatform equivalent of [writeBuildFile]: declares a `jvm()` target and one
-     * other platform target (e.g. `iosX64()`), each with its own dependency set, so functional
-     * tests can assert per-target catalogs differ and `commonMain`'s is their union.
+     * A Kotlin Multiplatform equivalent of [writeBuildFile]: declares a `jvm()` target and,
+     * optionally, one other platform target (e.g. `iosX64()`), each with its own dependency
+     * set, so functional tests can assert per-target catalogs differ and `commonMain`'s is
+     * their union. [otherTargetDsl]/[otherTargetSourceSetName] are both null to declare only
+     * the `jvm()` target - e.g. for a fixture that needs to run a real Kotlin *compile* task
+     * (not just the `generate*LicenseCatalog` tasks), where a second, native target would
+     * require downloading the Kotlin/Native toolchain.
      *
      * Requires [writeSettingsForPublishedPlugin], not [writeSettings]: applying
      * `kotlin("multiplatform")` alongside a plugin injected via
@@ -126,14 +130,36 @@ class FixtureProject(
      * genuinely works - confirmed separately via a real `includeBuild` consumer project.
      */
     fun writeMultiplatformBuildFile(
-        otherTargetDsl: String,
-        otherTargetSourceSetName: String,
+        otherTargetDsl: String? = null,
+        otherTargetSourceSetName: String? = null,
         jvmDependencyCoordinates: List<String> = emptyList(),
         otherTargetDependencyCoordinates: List<String> = emptyList(),
         commonDependencyCoordinates: List<String> = emptyList(),
         linkedLicenseBlock: String = "",
     ) {
         val pluginVersion = System.getProperty("linkedlicense.version") ?: "0.1.0"
+
+        // Only needed when a fixture wants to resolve the real `dev.noahtownsend:linkedlicense`
+        // artifact as an ordinary dependency (e.g. to actually *compile* the generated
+        // `GeneratedLicenses.kt` against it) - see MultiplatformCompilationFunctionalTest. The
+        // property is always set by the `functionalTest` Gradle task (linkedlicense-plugin's
+        // build script), so this is safe to read unconditionally.
+        val functionalTestRepoDir = System.getProperty("linkedlicense.functionalTestRepo")
+
+        val otherTargetBlock =
+            if (otherTargetDsl != null && otherTargetSourceSetName != null) {
+                """
+                |    $otherTargetDsl
+                |
+                |    sourceSets {
+                |        $otherTargetSourceSetName.dependencies {
+                ${otherTargetDependencyCoordinates.joinToString("\n") { "|            implementation(\"$it\")" }}
+                |        }
+                |    }
+                """.trimMargin()
+            } else {
+                ""
+            }
 
         File(projectDir, "build.gradle.kts").writeText(
             """
@@ -146,12 +172,13 @@ class FixtureProject(
             |
             |repositories {
             |    maven { url = URI.create("${repo.dir.toURI()}") }
+            ${if (functionalTestRepoDir != null) "|    maven { url = URI.create(\"${File(functionalTestRepoDir).toURI()}\") }" else ""}
             |    mavenCentral()
             |}
             |
             |kotlin {
             |    jvm()
-            |    $otherTargetDsl
+            $otherTargetBlock
             |
             |    sourceSets {
             |        commonMain.dependencies {
@@ -159,9 +186,6 @@ class FixtureProject(
             |        }
             |        jvmMain.dependencies {
             ${jvmDependencyCoordinates.joinToString("\n") { "|            implementation(\"$it\")" }}
-            |        }
-            |        $otherTargetSourceSetName.dependencies {
-            ${otherTargetDependencyCoordinates.joinToString("\n") { "|            implementation(\"$it\")" }}
             |        }
             |    }
             |}
@@ -207,13 +231,13 @@ class FixtureProject(
             .withArguments(tasks.toList() + listOf("--stacktrace"))
             .forwardOutput()
 
-    fun generatedLicensesFile(): File =
-        File(projectDir, "build/generated/linkedlicense/main/dev/noahtownsend/linkedlicense/generated/GeneratedLicenses.kt")
+    fun generatedLicensesFile(): File = generatedLicensesFile("main")
 
     fun generatedLicensesFile(sourceSetName: String): File =
         File(
             projectDir,
-            "build/generated/linkedlicense/$sourceSetName/dev/noahtownsend/linkedlicense/generated/GeneratedLicenses.kt",
+            "build/generated/linkedlicense/$sourceSetName/dev/noahtownsend/linkedlicense/generated/" +
+                "${sourceSetName.lowercase()}/GeneratedLicenses.kt",
         )
 
     fun thirdPartyNoticesFile(): File = File(projectDir, "THIRD-PARTY-NOTICES")

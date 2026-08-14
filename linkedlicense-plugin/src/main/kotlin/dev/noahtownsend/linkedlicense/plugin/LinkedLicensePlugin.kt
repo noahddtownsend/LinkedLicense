@@ -46,7 +46,14 @@ class LinkedLicensePlugin : Plugin<Project> {
 
                 task.doLast {
                     val configuration = project.configurations.getByName("runtimeClasspath")
-                    CatalogTaskExecution.generateCatalog(project, extension, configuration, outputDir, includeAssets = true)
+                    CatalogTaskExecution.generateCatalog(
+                        project,
+                        extension,
+                        configuration,
+                        outputDir,
+                        includeAssets = true,
+                        sourceSetName = "main",
+                    )
                 }
             }
 

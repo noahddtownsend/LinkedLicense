@@ -58,10 +58,11 @@ class NpmScanningFunctionalTest {
             outputDir = outputDir,
             includeAssets = false,
             npmNodeModulesDir = nodeModules,
+            sourceSetName = "main",
         )
 
         val generated =
-            File(outputDir, "dev/noahtownsend/linkedlicense/generated/GeneratedLicenses.kt").readText()
+            File(outputDir, "dev/noahtownsend/linkedlicense/generated/main/GeneratedLicenses.kt").readText()
 
         assertTrue(generated.contains("License.MIT("), generated)
         assertTrue(generated.contains("elementLicensed = \"left-pad\""), generated)
@@ -86,10 +87,11 @@ class NpmScanningFunctionalTest {
             outputDir = outputDir,
             includeAssets = false,
             npmNodeModulesDir = nodeModules,
+            sourceSetName = "main",
         )
 
         val generated =
-            File(outputDir, "dev/noahtownsend/linkedlicense/generated/GeneratedLicenses.kt").readText()
+            File(outputDir, "dev/noahtownsend/linkedlicense/generated/main/GeneratedLicenses.kt").readText()
 
         assertTrue(generated.contains("elementLicensed = \"chalk\""), generated)
         assertTrue(generated.contains("elementLicensed = \"ansi-styles\""), generated)
@@ -115,6 +117,7 @@ class NpmScanningFunctionalTest {
                     outputDir = outputDir,
                     includeAssets = false,
                     npmNodeModulesDir = nodeModules,
+                    sourceSetName = "main",
                 )
             }
 
@@ -144,10 +147,11 @@ class NpmScanningFunctionalTest {
             outputDir = outputDir,
             includeAssets = false,
             npmNodeModulesDir = nodeModules,
+            sourceSetName = "main",
         )
 
         val generated =
-            File(outputDir, "dev/noahtownsend/linkedlicense/generated/GeneratedLicenses.kt").readText()
+            File(outputDir, "dev/noahtownsend/linkedlicense/generated/main/GeneratedLicenses.kt").readText()
 
         assertTrue(generated.contains("License.MIT("), generated)
     }
@@ -166,10 +170,11 @@ class NpmScanningFunctionalTest {
             outputDir = outputDir,
             includeAssets = false,
             npmNodeModulesDir = File(tempDir, "does-not-exist"),
+            sourceSetName = "main",
         )
 
         val generated =
-            File(outputDir, "dev/noahtownsend/linkedlicense/generated/GeneratedLicenses.kt").readText()
+            File(outputDir, "dev/noahtownsend/linkedlicense/generated/main/GeneratedLicenses.kt").readText()
 
         assertFalse(generated.contains("License."), generated)
     }

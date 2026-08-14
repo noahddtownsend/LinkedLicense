@@ -43,6 +43,14 @@ internal object CatalogTaskExecution {
          * source set with any. `null`/non-existent means "nothing to scan" - not an error.
          */
         npmNodeModulesDir: File? = null,
+        /**
+         * The Kotlin source set this catalog is generated for (e.g. `"main"`, `"jvmMain"`).
+         * Lowercased and appended to the generated file's package (README §2.1 step 7), so that
+         * `commonMain`'s generated file — merged by KGP's default hierarchy template into every
+         * platform target's own compilation — never redeclares the same `object
+         * GeneratedLicenses` as that target's own generated file.
+         */
+        sourceSetName: String,
     ) {
         OverridesFileScaffold.ensureExists(extension.overridesFile)
 
@@ -58,6 +66,7 @@ internal object CatalogTaskExecution {
             configurations = listOf(configuration),
             outputDir = outputDir,
             includeAssets = includeAssets,
+            sourceSetName = sourceSetName,
         )
     }
 
@@ -92,6 +101,7 @@ internal object CatalogTaskExecution {
             configurations = configurations,
             outputDir = outputDir,
             includeAssets = true,
+            sourceSetName = "commonMain",
         )
     }
 
@@ -106,6 +116,8 @@ internal object CatalogTaskExecution {
         configurations: List<Configuration>,
         outputDir: File,
         includeAssets: Boolean,
+        /** README §2.1 step 7 — disambiguates the generated package per source set. */
+        sourceSetName: String,
     ) {
         val coordinates = componentIds.map { it.toCoordinate() } + extraCoordinates
 
@@ -191,12 +203,14 @@ internal object CatalogTaskExecution {
             writeThirdPartyNotices(project, configurations, coordinates, overrides)
         }
 
+        val sourceSetPackageSegment = sourceSetName.lowercase()
         outputDir.mkdirs()
-        val generatedFile = File(outputDir, "dev/noahtownsend/linkedlicense/generated/GeneratedLicenses.kt")
+        val generatedFile =
+            File(outputDir, "dev/noahtownsend/linkedlicense/generated/$sourceSetPackageSegment/GeneratedLicenses.kt")
         generatedFile.parentFile.mkdirs()
         generatedFile.writeText(
             renderGeneratedLicensesFile(
-                packageName = "dev.noahtownsend.linkedlicense.generated",
+                packageName = "dev.noahtownsend.linkedlicense.generated.$sourceSetPackageSegment",
                 entries = result.entries.map { it.second } + result.assetEntries.map { it.second },
             ),
         )

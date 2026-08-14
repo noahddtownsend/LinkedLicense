@@ -76,6 +76,7 @@ internal object MultiplatformCatalogTasks {
                         outputDir = outputDir,
                         includeAssets = false,
                         npmNodeModulesDir = NpmNodeModulesLocator.locate(project, sourceSetName),
+                        sourceSetName = sourceSetName,
                     )
                 }
             }
