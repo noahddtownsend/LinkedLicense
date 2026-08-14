@@ -191,20 +191,47 @@ fail-on-unknown/copyleft/policy checks — not a separate bolted-on tool with it
 
 - **npm** (`jsMain`/`wasmJsMain` source sets with declared npm dependencies): resolved via
   the generated `package.json`/lockfile, each package's own `package.json` `license` field
-  matched through the same SPDX-name table used for Maven POMs.
+  matched through the same SPDX-name table used for Maven POMs. Its `repository` field
+  (a git URL) also feeds the best-guess fallback below when `license` is missing/unmatched.
 - **CocoaPods** (when the `kotlin-cocoapods` plugin is applied): resolved via `Podfile.lock`,
   each pod's `.podspec`'s `license` field (string or `{ type, file, text }` object) matched
-  the same way.
+  the same way. Its `source`/`homepage` fields likewise feed the fallback below.
 - **SPM**: `Package.resolved` only pins a git URL + revision — there's no license field
-  anywhere in that chain to read, unlike npm/CocoaPods/Maven. By default, every resolved SPM
-  package is treated as unmatched (same fail-on-unknown path as any other unrecognized
-  dependency) — you provide an `[overrides]`/`[ignored]` entry for each. Setting
-  `spmBestEffortLicenseFetch = true` (default `false`) makes the plugin instead fetch each
-  pinned revision's repo root over the network looking for a `LICENSE`/`LICENSE.md` file and
-  pattern-match its content against known license texts — opt-in because it adds network I/O
-  and a new failure mode (repo unreachable) to what's otherwise an offline, deterministic
-  build step, and heuristic text-matching can misfire in ways POM/package.json/podspec field
-  parsing can't.
+  anywhere in that chain to read, unlike npm/CocoaPods/Maven, so it *only* ever has the
+  fallback below to go on (never a primary field match).
+
+#### Best-guess fallback (opt-in, off by default)
+
+Maven POMs, npm's `package.json`, and CocoaPods' podspecs all *usually* carry a
+machine-readable `license` field, but not always — and SPM never does. In every one of
+those cases, if a repository/source URL is available (Maven's POM `<scm>`, npm's
+`repository`, a podspec's `source`/`homepage`, or SPM's `Package.resolved` URL directly),
+`bestEffortLicenseFetch = true` (default `false`) makes the plugin fetch that repo's root
+at the resolved revision, look for a `LICENSE`/`LICENSE.md` file, and pattern-match its
+content against known license texts, across *all four* ecosystems uniformly — not a
+SPM-specific setting, since the underlying gap (missing/absent field, but a repo URL to
+fall back on) is the same shape everywhere it comes up.
+
+This is opt-in because it adds network I/O and a new failure mode (repo unreachable) to
+what's otherwise an offline, deterministic build step, and heuristic text-matching can
+misfire in ways structured-field parsing can't — so every dependency resolved this way:
+
+- **Emits a build warning** naming the coordinate and the guessed license, every build,
+  so a best-guess entry is never silently indistinguishable from an authoritative
+  field-matched one.
+- Can have that warning silenced per-coordinate via a `[suppress-best-guess-warnings]`
+  table in `linkedlicense.toml` (same ecosystem-prefixed key format as everywhere else) —
+  for cases you've manually verified the guess is correct and don't want repeated noise on
+  every build. This suppresses the warning only; the guessed license itself is still used
+  and still subject to the copyleft guard (§3.5) and `[license-policy]` (§3.6) like any
+  other entry.
+
+```toml
+[suppress-best-guess-warnings]
+"spm:https://github.com/apple/swift-log" = "Verified 2026-08-14: Apache-2.0 LICENSE at tag 1.5.3."
+```
+
+(A reason string is required, same audit-trail pattern as `[ignored]`/`[copyleft-allowed]`.)
 
 Every dependency from any of these three ecosystems gets an override-table key prefixed
 with its ecosystem, in the *same* `[overrides]`/`[ignored]`/`[copyleft-allowed]`/
@@ -225,7 +252,7 @@ linkedLicense {
     copyRequiredNotices = true                 // default shown
     failOnCopyleft = true                      // default shown
     failOnUnknown = true                       // default shown
-    spmBestEffortLicenseFetch = false          // default shown, see §2.3
+    bestEffortLicenseFetch = false             // default shown, see §2.3
 }
 ```
 
