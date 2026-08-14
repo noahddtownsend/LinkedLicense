@@ -36,6 +36,15 @@ dependencies {
     implementation(project(":"))
     implementation(libs.tomlj)
 
+    // compileOnly, not implementation: this plugin must never bundle its own copy of KGP
+    // classes into its jar. At runtime it needs to bind against whichever KGP classes the
+    // *consuming* project's own `plugins { id("org.jetbrains.kotlin.multiplatform") }` (or
+    // `.jvm`) provides - Gradle keeps those on a shared plugin classloader for plugins
+    // co-applied via the `plugins {}` DSL. Referencing KGP types (e.g.
+    // KotlinMultiplatformExtension) without this dependency to compile against previously
+    // threw NoClassDefFoundError/ClassCastException at apply time.
+    compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:${libs.versions.kotlin.get()}")
+
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlin.test.junit5)
     testImplementation(gradleTestKit())
