@@ -367,7 +367,3 @@ if (showLicenses) {
 
 The "Licenses" label ships translated via Compose Multiplatform resources across roughly
 40 locales.
-
----
-
-See [`PUBLISHING.md`](./PUBLISHING.md) for maintainer notes on releasing this library.
