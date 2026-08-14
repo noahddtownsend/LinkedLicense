@@ -8,6 +8,20 @@ plugins {
     alias(libs.plugins.gradlePluginPublish)
 }
 
+// Dogfooding note: applying `dev.noahtownsend.linkedlicense` to this module (the one that
+// builds the plugin) was tried, resolving it from the local functionalTestRepo the same way
+// linkedlicense-compose does (see settings.gradle.kts). It configures, but fails at task-graph
+// realization with a classloader `ClassCastException` on `KotlinCompile` - the plugin's
+// `compileOnly` binding against `kotlin-gradle-plugin` (see the dependency comment below)
+// expects to bind to the *consuming* project's own KGP classes on Gradle's shared plugin
+// classloader, but here the "consuming" project is the same one whose `org.jetbrains.kotlin.jvm`
+// application built the plugin jar in the first place, so the two KGP class copies collide.
+// This is genuinely self-referential/circular in a way linkedlicense-compose isn't (that module
+// doesn't build the plugin), so per the dogfooding task's own guidance it's skipped rather than
+// hacked around - the plugin's only real dependency (tomlj) is Apache-2.0, documented by hand
+// here instead: https://github.com/tomlj/tomlj is Apache License 2.0 per its published POM.
+// kotlin-gradle-plugin itself is `compileOnly` below, never shipped, so needs no entry.
+
 group = "dev.noahtownsend"
 version = "0.9.0"
 
