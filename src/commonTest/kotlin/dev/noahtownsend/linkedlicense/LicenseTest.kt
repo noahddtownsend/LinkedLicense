@@ -1,6 +1,8 @@
 package dev.noahtownsend.linkedlicense
 
 import dev.noahtownsend.linkedlicense.License.CcVariant
+import dev.noahtownsend.linkedlicense.License.CcVersion
+import dev.noahtownsend.linkedlicense.License.OglVersion
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -186,7 +188,7 @@ class LicenseTest {
         val license =
             License.CreativeCommons(
                 variant = CcVariant.BY_SA,
-                version = "4.0",
+                version = CcVersion.V4_0,
                 elementLicensed = "Wikimedia Commons Media",
                 author = "Wikimedia Contributors",
             )
@@ -203,7 +205,7 @@ class LicenseTest {
         val license =
             License.CreativeCommons(
                 variant = CcVariant.BY_ND,
-                version = "4.0",
+                version = CcVersion.V4_0,
                 elementLicensed = "Photo",
                 author = "Photographer",
             )
@@ -231,15 +233,15 @@ class LicenseTest {
                 License.PublicDomain(elementLicensed = "e", author = "a"),
                 License.UsGovernmentPublicDomain(elementLicensed = "e", author = "a"),
                 License.Cc0(elementLicensed = "e", author = "a"),
-                License.CreativeCommons(variant = CcVariant.BY, version = "4.0", elementLicensed = "e", author = "a"),
-                License.CreativeCommons(variant = CcVariant.BY_SA, version = "4.0", elementLicensed = "e", author = "a"),
-                License.CreativeCommons(variant = CcVariant.BY_ND, version = "4.0", elementLicensed = "e", author = "a"),
-                License.CreativeCommons(variant = CcVariant.BY_NC, version = "4.0", elementLicensed = "e", author = "a"),
-                License.CreativeCommons(variant = CcVariant.BY_NC_SA, version = "4.0", elementLicensed = "e", author = "a"),
-                License.CreativeCommons(variant = CcVariant.BY_NC_ND, version = "4.0", elementLicensed = "e", author = "a"),
+                License.CreativeCommons(variant = CcVariant.BY, version = CcVersion.V4_0, elementLicensed = "e", author = "a"),
+                License.CreativeCommons(variant = CcVariant.BY_SA, version = CcVersion.V4_0, elementLicensed = "e", author = "a"),
+                License.CreativeCommons(variant = CcVariant.BY_ND, version = CcVersion.V4_0, elementLicensed = "e", author = "a"),
+                License.CreativeCommons(variant = CcVariant.BY_NC, version = CcVersion.V4_0, elementLicensed = "e", author = "a"),
+                License.CreativeCommons(variant = CcVariant.BY_NC_SA, version = CcVersion.V4_0, elementLicensed = "e", author = "a"),
+                License.CreativeCommons(variant = CcVariant.BY_NC_ND, version = CcVersion.V4_0, elementLicensed = "e", author = "a"),
                 License.Ofl(elementLicensed = "e", author = "a"),
-                License.OpenGovernmentLicence(jurisdiction = "UK", version = "3.0", elementLicensed = "e", author = "a"),
-                License.Mapbox(),
+                License.OpenGovernmentLicence(jurisdiction = "UK", version = OglVersion.V3_0, elementLicensed = "e", author = "a"),
+                License.Odbl(elementLicensed = "e", author = "a"),
                 License.Custom(elementLicensed = "e", author = "a", text = "t"),
             )
 
@@ -265,7 +267,7 @@ class LicenseTest {
         val license =
             License.OpenGovernmentLicence(
                 jurisdiction = "United Kingdom",
-                version = "3.0",
+                version = OglVersion.V3_0,
                 elementLicensed = "UK FCDO Travel Advice",
                 author = "Foreign, Commonwealth & Development Office",
             )
@@ -278,13 +280,20 @@ class LicenseTest {
     }
 
     @Test
-    fun `Mapbox licenseText has sensible defaults`() {
-        val license = License.Mapbox()
+    fun `Odbl licenseText is non-blank and not copyleft`() {
+        val license = License.Odbl(elementLicensed = "OpenStreetMap Data", author = "OpenStreetMap Contributors")
 
         assertTrue(license.licenseText.isNotBlank())
-        assertEquals("Mapbox Maps", license.elementLicensed)
-        assertEquals("Mapbox", license.author)
+        assertTrue(license.licenseText.contains("Open Data Commons Open Database License"))
+        assertTrue(license.licenseText.contains("opendatacommons.org/licenses/odbl/1-0/"))
         assertFalse(license.isCopyleft)
+    }
+
+    @Test
+    fun `Odbl shortName is ODbL-1_0`() {
+        val license = License.Odbl(elementLicensed = "e", author = "a")
+
+        assertEquals("ODbL-1.0", license.shortName)
     }
 
     @Test
@@ -328,15 +337,15 @@ class LicenseTest {
                 License.PublicDomain(elementLicensed = "e", author = "a"),
                 License.UsGovernmentPublicDomain(elementLicensed = "e", author = "a"),
                 License.Cc0(elementLicensed = "e", author = "a"),
-                License.CreativeCommons(variant = CcVariant.BY, version = "4.0", elementLicensed = "e", author = "a"),
-                License.CreativeCommons(variant = CcVariant.BY_SA, version = "4.0", elementLicensed = "e", author = "a"),
-                License.CreativeCommons(variant = CcVariant.BY_ND, version = "4.0", elementLicensed = "e", author = "a"),
-                License.CreativeCommons(variant = CcVariant.BY_NC, version = "4.0", elementLicensed = "e", author = "a"),
-                License.CreativeCommons(variant = CcVariant.BY_NC_SA, version = "4.0", elementLicensed = "e", author = "a"),
-                License.CreativeCommons(variant = CcVariant.BY_NC_ND, version = "4.0", elementLicensed = "e", author = "a"),
+                License.CreativeCommons(variant = CcVariant.BY, version = CcVersion.V4_0, elementLicensed = "e", author = "a"),
+                License.CreativeCommons(variant = CcVariant.BY_SA, version = CcVersion.V4_0, elementLicensed = "e", author = "a"),
+                License.CreativeCommons(variant = CcVariant.BY_ND, version = CcVersion.V4_0, elementLicensed = "e", author = "a"),
+                License.CreativeCommons(variant = CcVariant.BY_NC, version = CcVersion.V4_0, elementLicensed = "e", author = "a"),
+                License.CreativeCommons(variant = CcVariant.BY_NC_SA, version = CcVersion.V4_0, elementLicensed = "e", author = "a"),
+                License.CreativeCommons(variant = CcVariant.BY_NC_ND, version = CcVersion.V4_0, elementLicensed = "e", author = "a"),
                 License.Ofl(elementLicensed = "e", author = "a"),
-                License.OpenGovernmentLicence(jurisdiction = "UK", version = "3.0", elementLicensed = "e", author = "a"),
-                License.Mapbox(),
+                License.OpenGovernmentLicence(jurisdiction = "UK", version = OglVersion.V3_0, elementLicensed = "e", author = "a"),
+                License.Odbl(elementLicensed = "e", author = "a"),
                 License.Custom(elementLicensed = "e", author = "a", text = "t"),
             )
 
@@ -350,7 +359,7 @@ class LicenseTest {
         val license =
             License.CreativeCommons(
                 variant = CcVariant.BY_SA,
-                version = "4.0",
+                version = CcVersion.V4_0,
                 elementLicensed = "Wikimedia Commons Media",
                 author = "Wikimedia Contributors",
             )
@@ -363,11 +372,30 @@ class LicenseTest {
         val license =
             License.OpenGovernmentLicence(
                 jurisdiction = "United Kingdom",
-                version = "3.0",
+                version = OglVersion.V3_0,
                 elementLicensed = "e",
                 author = "a",
             )
 
         assertEquals("OGL v3.0", license.shortName)
+    }
+
+    @Test
+    fun `kind defaults to DEPENDENCY when not specified`() {
+        val license = License.MIT(elementLicensed = "Kotlin", author = "JetBrains", year = "2011")
+
+        assertEquals(License.Kind.DEPENDENCY, license.kind)
+    }
+
+    @Test
+    fun `kind can be overridden to ASSET on construction`() {
+        val license =
+            License.Ofl(
+                elementLicensed = "Cinzel Decorative Font",
+                author = "Matt Tindal",
+                kind = License.Kind.ASSET,
+            )
+
+        assertEquals(License.Kind.ASSET, license.kind)
     }
 }

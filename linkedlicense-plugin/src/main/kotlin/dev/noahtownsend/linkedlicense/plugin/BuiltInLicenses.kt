@@ -27,7 +27,7 @@ object BuiltInLicenses {
             "Ofl" to License.Ofl::class,
             "PublicDomain" to License.PublicDomain::class,
             "UsGovernmentPublicDomain" to License.UsGovernmentPublicDomain::class,
-            "Mapbox" to License.Mapbox::class,
+            "Odbl" to License.Odbl::class,
             "Custom" to License.Custom::class,
         )
 

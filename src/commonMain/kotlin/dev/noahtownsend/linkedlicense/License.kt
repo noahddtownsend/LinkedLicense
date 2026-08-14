@@ -10,7 +10,15 @@ abstract class License(
     open val elementLicensed: String,
     open val author: String,
     open val url: String? = null,
+    open val kind: Kind = Kind.DEPENDENCY,
 ) {
+    /**
+     * Distinguishes an actual code dependency ([Kind.DEPENDENCY], the default) from a bundled
+     * non-dependency asset ([Kind.ASSET]) — a dataset, image, font, or similar — that carries
+     * its own license/attribution but was never resolved off a Gradle dependency graph.
+     */
+    enum class Kind { DEPENDENCY, ASSET }
+
     /**
      * The full text of the license to be displayed.
      */
@@ -38,19 +46,14 @@ abstract class License(
         override val author: String,
         val year: String,
         override val url: String? = null,
-    ) : License(elementLicensed, author, url) {
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
         override val shortName: String get() = "MIT"
 
         override val licenseText: String
-            get() =
-                MIT_TEMPLATE
-                    .replace("{YEAR}", year)
-                    .replace("{AUTHOR}", author)
+            get() = """MIT License
 
-        companion object {
-            private const val MIT_TEMPLATE = """MIT License
-
-Copyright {YEAR} {AUTHOR}
+Copyright $year $author
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -69,14 +72,14 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
-        }
     }
 
     data class Apache1_1(
         override val elementLicensed: String,
         override val author: String,
         override val url: String? = null,
-    ) : License(elementLicensed, author, url) {
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
         override val shortName: String get() = "Apache 1.1"
 
         override val licenseText: String = APACHE1_1_TEXT
@@ -137,7 +140,8 @@ information on the Apache Software Foundation, please see
         override val elementLicensed: String,
         override val author: String,
         override val url: String? = null,
-    ) : License(elementLicensed, author, url) {
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
         override val shortName: String get() = "Apache 2.0"
 
         override val licenseText: String = APACHE2_TEXT
@@ -352,19 +356,14 @@ limitations under the License."""
         override val author: String,
         val year: String,
         override val url: String? = null,
-    ) : License(elementLicensed, author, url) {
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
         override val shortName: String get() = "BSD-2-Clause"
 
         override val licenseText: String
-            get() =
-                BSD2_TEMPLATE
-                    .replace("{YEAR}", year)
-                    .replace("{AUTHOR}", author)
+            get() = """BSD 2-Clause License
 
-        companion object {
-            private const val BSD2_TEMPLATE = """BSD 2-Clause License
-
-Copyright (c) {YEAR}, {AUTHOR}
+Copyright (c) $year, $author
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -386,7 +385,6 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."""
-        }
     }
 
     data class Bsd3Clause(
@@ -394,19 +392,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."""
         override val author: String,
         val year: String,
         override val url: String? = null,
-    ) : License(elementLicensed, author, url) {
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
         override val shortName: String get() = "BSD-3-Clause"
 
         override val licenseText: String
-            get() =
-                BSD3_TEMPLATE
-                    .replace("{YEAR}", year)
-                    .replace("{AUTHOR}", author)
+            get() = """BSD 3-Clause License
 
-        companion object {
-            private const val BSD3_TEMPLATE = """BSD 3-Clause License
-
-Copyright (c) {YEAR}, {AUTHOR}
+Copyright (c) $year, $author
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -418,7 +411,7 @@ modification, are permitted provided that the following conditions are met:
    this list of conditions and the following disclaimer in the documentation
    and/or other materials provided with the distribution.
 
-3. Neither the name of {AUTHOR} nor the names of its contributors may be used
+3. Neither the name of $author nor the names of its contributors may be used
    to endorse or promote products derived from this software without specific
    prior written permission.
 
@@ -432,7 +425,6 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."""
-        }
     }
 
     data class Isc(
@@ -440,19 +432,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."""
         override val author: String,
         val year: String,
         override val url: String? = null,
-    ) : License(elementLicensed, author, url) {
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
         override val shortName: String get() = "ISC"
 
         override val licenseText: String
-            get() =
-                ISC_TEMPLATE
-                    .replace("{YEAR}", year)
-                    .replace("{AUTHOR}", author)
+            get() = """ISC License
 
-        companion object {
-            private const val ISC_TEMPLATE = """ISC License
-
-Copyright (c) {YEAR}, {AUTHOR}
+Copyright (c) $year, $author
 
 Permission to use, copy, modify, and/or distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -465,14 +452,14 @@ INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
 LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE."""
-        }
     }
 
     data class Unlicense(
         override val elementLicensed: String,
         override val author: String,
         override val url: String? = null,
-    ) : License(elementLicensed, author, url) {
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
         override val shortName: String get() = "Unlicense"
 
         override val licenseText: String = UNLICENSE_TEXT
@@ -506,7 +493,8 @@ For more information, please refer to <https://unlicense.org>"""
         override val elementLicensed: String,
         override val author: String,
         override val url: String? = null,
-    ) : License(elementLicensed, author, url) {
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
         override val shortName: String get() = "Public Domain"
 
         override val licenseText: String
@@ -520,7 +508,8 @@ $elementLicensed by $author has been dedicated to the public domain. To the exte
         override val elementLicensed: String,
         override val author: String,
         override val url: String? = null,
-    ) : License(elementLicensed, author, url) {
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
         override val shortName: String get() = "US Gov Public Domain"
 
         override val licenseText: String
@@ -534,7 +523,8 @@ As a work of the United States Government, this content is not subject to copyri
         override val elementLicensed: String,
         override val author: String,
         override val url: String? = null,
-    ) : License(elementLicensed, author, url) {
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
         override val isCopyleft: Boolean get() = true
 
         override val shortName: String get() = "GPL-2.0"
@@ -551,7 +541,8 @@ Full license text: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html"""
         override val elementLicensed: String,
         override val author: String,
         override val url: String? = null,
-    ) : License(elementLicensed, author, url) {
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
         override val isCopyleft: Boolean get() = true
 
         override val shortName: String get() = "GPL-3.0"
@@ -568,7 +559,8 @@ Full license text: https://www.gnu.org/licenses/gpl-3.0.html"""
         override val elementLicensed: String,
         override val author: String,
         override val url: String? = null,
-    ) : License(elementLicensed, author, url) {
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
         override val isCopyleft: Boolean get() = true
 
         override val shortName: String get() = "LGPL-2.1"
@@ -585,7 +577,8 @@ Full license text: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html"""
         override val elementLicensed: String,
         override val author: String,
         override val url: String? = null,
-    ) : License(elementLicensed, author, url) {
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
         override val isCopyleft: Boolean get() = true
 
         override val shortName: String get() = "LGPL-3.0"
@@ -602,7 +595,8 @@ Full license text: https://www.gnu.org/licenses/lgpl-3.0.html"""
         override val elementLicensed: String,
         override val author: String,
         override val url: String? = null,
-    ) : License(elementLicensed, author, url) {
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
         override val isCopyleft: Boolean get() = true
 
         override val shortName: String get() = "MPL-2.0"
@@ -619,7 +613,8 @@ Full license text: https://www.mozilla.org/en-US/MPL/2.0/"""
         override val elementLicensed: String,
         override val author: String,
         override val url: String? = null,
-    ) : License(elementLicensed, author, url) {
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
         override val shortName: String get() = "CC0-1.0"
 
         override val licenseText: String
@@ -642,14 +637,23 @@ Full legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode"""
         BY_NC_ND("by-nc-nd", "Attribution-NonCommercial-NoDerivatives"),
     }
 
+    enum class CcVersion(internal val label: String) {
+        V1_0("1.0"),
+        V2_0("2.0"),
+        V2_5("2.5"),
+        V3_0("3.0"),
+        V4_0("4.0"),
+    }
+
     data class CreativeCommons(
         val variant: CcVariant,
-        val version: String,
+        val version: CcVersion,
         override val elementLicensed: String,
         override val author: String,
         override val url: String? = null,
-    ) : License(elementLicensed, author, url) {
-        override val shortName: String get() = "CC ${variant.name.replace('_', '-')} $version"
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val shortName: String get() = "CC ${variant.name.replace('_', '-')} ${version.label}"
 
         override val licenseText: String
             get() {
@@ -675,9 +679,9 @@ Full legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode"""
                         "- Share — copy and redistribute the material in any medium or format, unmodified and in whole"
                     }
 
-                return """Creative Commons ${variant.displayName} $version (CC ${variant.name.replace('_', '-')} $version)
+                return """Creative Commons ${variant.displayName} ${version.label} (CC ${variant.name.replace('_', '-')} ${version.label})
 
-$elementLicensed by $author is licensed under Creative Commons ${variant.displayName} $version.${if (url != null) "\nSource / URL: $url" else ""}
+$elementLicensed by $author is licensed under Creative Commons ${variant.displayName} ${version.label}.${if (url != null) "\nSource / URL: $url" else ""}
 
 Under this license, you are free to:
 $permissions
@@ -685,7 +689,7 @@ $permissions
 Under the following terms:
 ${conditions.joinToString("\n") { "- $it" }}
 
-Full legal code: https://creativecommons.org/licenses/${variant.slug}/$version/legalcode"""
+Full legal code: https://creativecommons.org/licenses/${variant.slug}/${version.label}/legalcode"""
             }
     }
 
@@ -693,7 +697,8 @@ Full legal code: https://creativecommons.org/licenses/${variant.slug}/$version/l
         override val elementLicensed: String,
         override val author: String,
         override val url: String? = null,
-    ) : License(elementLicensed, author, url) {
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
         override val shortName: String get() = "OFL-1.1"
 
         override val licenseText: String = OFL_TEXT
@@ -786,27 +791,26 @@ OTHER DEALINGS IN THE FONT SOFTWARE."""
         }
     }
 
+    enum class OglVersion(internal val label: String) {
+        V1_0("1.0"),
+        V2_0("2.0"),
+        V3_0("3.0"),
+    }
+
     data class OpenGovernmentLicence(
         val jurisdiction: String,
-        val version: String,
+        val version: OglVersion,
         override val elementLicensed: String,
         override val author: String,
         override val url: String? = null,
-    ) : License(elementLicensed, author, url) {
-        override val shortName: String get() = "OGL v$version"
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val shortName: String get() = "OGL v${version.label}"
 
         override val licenseText: String
-            get() =
-                OGL_TEMPLATE
-                    .replace("{JURISDICTION}", jurisdiction)
-                    .replace("{VERSION}", version)
-                    .replace("{ELEMENT}", elementLicensed)
-                    .replace("{AUTHOR}", author)
+            get() = """Open Government Licence v${version.label}
 
-        companion object {
-            private const val OGL_TEMPLATE = """Open Government Licence v{VERSION}
-
-{ELEMENT} is published by {AUTHOR} and reproduced here under the terms of the Open Government Licence v{VERSION} ({JURISDICTION}).
+$elementLicensed is published by $author and reproduced here under the terms of the Open Government Licence v${version.label} ($jurisdiction).
 
 You are encouraged to use and re-use the Information that is available under this licence freely and flexibly, with only a few conditions.
 
@@ -826,7 +830,7 @@ You must, where you do any of the above:
 - acknowledge the source of the Information by including any attribution statement specified by the Information Provider(s) and, where possible, provide a link to this licence.
 
 If the Information Provider does not provide a specific attribution statement, you must use the following:
-"Contains public sector information licensed under the Open Government Licence v{VERSION}."
+"Contains public sector information licensed under the Open Government Licence v${version.label}."
 
 You must not:
 - use the Information in a way that suggests any official status or that the Information Provider endorses you or your use of the Information;
@@ -836,31 +840,23 @@ You must not:
 
 This licence does not grant you any right to use any personal data or logos, crests or the Royal Arms, or any other trade marks.
 
-Full license text: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/{VERSION}/"""
-        }
+Full license text: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/${version.label}/"""
     }
 
-    data class Mapbox(
-        override val elementLicensed: String = "Mapbox Maps",
-        override val author: String = "Mapbox",
-        override val url: String? = "https://www.mapbox.com/about/maps/",
-    ) : License(elementLicensed, author, url) {
-        override val shortName: String get() = "Mapbox ToS"
+    data class Odbl(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val shortName: String get() = "ODbL-1.0"
 
-        override val licenseText: String = MAPBOX_TEXT
+        override val licenseText: String
+            get() = """Open Data Commons Open Database License 1.0 (ODbL-1.0)
 
-        companion object {
-            private const val MAPBOX_TEXT = """© Mapbox, © OpenStreetMap
+$elementLicensed by $author is licensed under the Open Data Commons Open Database License (ODbL) v1.0. This is a share-alike license for databases: you are free to copy, distribute, use, modify, and adapt the database, so long as you attribute the source, keep any derivative databases open under the same license, and share-alike any adapted version you distribute.${if (url != null) "\nSource / URL: $url" else ""}
 
-This application uses Mapbox services to display maps and location data.
-By using this application, you agree to be bound by Mapbox's Terms of Service:
-https://www.mapbox.com/legal/tos/
-
-Mapbox Privacy Policy:
-https://www.mapbox.com/legal/privacy/
-
-OpenStreetMap data is licensed under the Open Data Commons Open Database License (ODbL)."""
-        }
+Full legal code: https://opendatacommons.org/licenses/odbl/1-0/"""
     }
 
     data class Custom(
@@ -868,7 +864,8 @@ OpenStreetMap data is licensed under the Open Data Commons Open Database License
         override val author: String,
         val text: String,
         override val url: String? = null,
-    ) : License(elementLicensed, author, url) {
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
         override val shortName: String get() = "Custom"
 
         override val licenseText: String get() = text

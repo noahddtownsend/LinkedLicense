@@ -77,6 +77,11 @@ object LicenseMatcher {
             "unlicense" to License.Unlicense::class,
             "the unlicense" to License.Unlicense::class,
             "unlicense (unlicense)" to License.Unlicense::class,
+            "odbl-1.0" to License.Odbl::class,
+            "odbl" to License.Odbl::class,
+            "open data commons open database license" to License.Odbl::class,
+            "open data commons open database license (odbl)" to License.Odbl::class,
+            "open data commons open database license v1.0" to License.Odbl::class,
         )
 
     private val urlTable: List<Pair<Regex, KClass<out License>>> =
@@ -92,6 +97,7 @@ object LicenseMatcher {
             Regex("gnu\\.org/licenses/lgpl-3\\.0", RegexOption.IGNORE_CASE) to License.Lgpl3::class,
             Regex("mozilla\\.org.*MPL/2\\.0", RegexOption.IGNORE_CASE) to License.Mpl2::class,
             Regex("unlicense\\.org", RegexOption.IGNORE_CASE) to License.Unlicense::class,
+            Regex("opendatacommons\\.org/licenses/odbl", RegexOption.IGNORE_CASE) to License.Odbl::class,
         )
 
     fun match(
