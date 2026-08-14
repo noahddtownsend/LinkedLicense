@@ -166,6 +166,10 @@ already is.
 
 [copyleft-allowed]
 "org.gnu:some-lib" = "Used only at build time, never linked into a shipped artifact."
+
+[license-policy]
+allow = ["MIT", "Apache2", "Bsd2Clause", "Bsd3Clause", "Isc"]
+block = ["Gpl3"]
 ```
 
 - **`[overrides]`** pins an exact coordinate to a specific built-in `License` type (or a
@@ -176,6 +180,8 @@ already is.
   required — it's an audit trail, not just a switch.
 - **`[copyleft-allowed]`** allow-lists a coordinate past the copyleft guard (§3.5). A reason
   string is required.
+- **`[license-policy]`** — see §3.6, a *license-type*-level allow/block list (as opposed to
+  the coordinate-level tables above).
 - `[overrides]`/`[ignored]` are checked *before* auto-matching. Anything neither
   auto-matched nor covered by one of these three tables fails the build.
 
@@ -214,6 +220,33 @@ When a matched or overridden dependency resolves to a license with `isCopyleft =
 (GPL2/GPL3/LGPL2.1/LGPL3/MPL2 among the built-ins), `generateLicenseCatalog` fails the build
 — same aggregated-list-of-offenders style as §3.3 — unless that coordinate has a
 `[copyleft-allowed]` entry, or you set `failOnCopyleft = false` project-wide.
+
+### 3.6 License allow/block list (opt-in, empty by default)
+
+`[license-policy]` restricts which *license types* (not individual coordinates) are
+acceptable at all, independent of the copyleft guard:
+
+```toml
+[license-policy]
+allow = ["MIT", "Apache2"]   # optional
+block = ["Gpl3", "AGPL3"]    # optional
+```
+
+- **If `allow` is non-empty**, only dependencies whose resolved license type is in `allow`
+  pass; everything else fails the build, regardless of `block`.
+- **If `allow` is empty or absent** (the default), every license type passes *except* those
+  listed in `block` — i.e. with no allow list defined, everything not on the blocklist is
+  allowed.
+- Entries reference license types by the same identifier used in `[overrides]`'s `license =
+  "..."` field (a built-in type name like `"MIT"`/`"Gpl3"`, or a `custom:...` symbol
+  reference for your own subclasses).
+- Violations are collected and reported the same aggregated way as §3.3/§3.5 — every
+  offending coordinate and its license type in one failure, not one per build.
+- This runs in addition to, not instead of, the copyleft guard (§3.5): a GPL dependency
+  still needs a `[copyleft-allowed]` entry (or `failOnCopyleft = false`) even if you've also
+  blocked/allowed it here, and vice versa. The two checks exist for different reasons —
+  copyleft is a legal-risk default; `[license-policy]` is your own project's explicit
+  policy — so both apply independently.
 
 ## 4. Custom licenses in code
 
