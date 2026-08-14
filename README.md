@@ -41,7 +41,6 @@ library dependency or an MIT-licensed font depending on how you construct it. Co
 can use it to group or label entries separately ("Dependencies" vs. "Data & Assets"). See
 [§3.7](#37-non-dependency-assets) for how the scanning plugin lets you declare these
 alongside scanned dependencies without hand-merging two lists yourself.
-```
 
 ### Built-in types
 
