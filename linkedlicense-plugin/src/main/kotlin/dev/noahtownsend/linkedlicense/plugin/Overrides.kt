@@ -12,6 +12,8 @@ sealed class OverrideSpec {
         val author: String?,
         val url: String?,
         val text: String?,
+        /** Optional [License.Custom.licenseName] override — ignored for any other built-in type. */
+        val licenseName: String? = null,
     ) : OverrideSpec()
 
     /** A `custom:fully.qualified.Symbol` reference — codegen emits an import + reference. */

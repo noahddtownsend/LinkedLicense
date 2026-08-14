@@ -126,6 +126,7 @@ object TomlOverridesParser {
             author = table.getString("author"),
             url = table.getString("url"),
             text = table.getString("text"),
+            licenseName = table.getString("licenseName"),
         )
     }
 }

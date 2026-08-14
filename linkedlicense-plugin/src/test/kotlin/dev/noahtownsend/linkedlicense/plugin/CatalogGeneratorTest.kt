@@ -251,6 +251,38 @@ class CatalogGeneratorTest {
     }
 
     @Test
+    fun `resolve() threads a Custom built-in override's licenseName into the generated expression`() {
+        val overrides =
+            OverridesConfig(
+                overrides =
+                    mapOf(
+                        unknownCoord.moduleId to
+                            OverrideSpec.BuiltIn(
+                                kClass = License.Custom::class,
+                                elementLicensed = "Mapbox Maps SDK",
+                                author = "Mapbox",
+                                url = null,
+                                text = "Some bespoke license text.",
+                                licenseName = "Mapbox ToS",
+                            ),
+                    ),
+            )
+
+        val result =
+            CatalogGenerator.resolve(
+                coordinates = listOf(unknownCoord),
+                pomInfoOf = pomInfoFor(mapOf(unknownCoord to pomInfo(null))),
+                overrides = overrides,
+                failOnCopyleft = true,
+                failOnUnknown = true,
+            )
+
+        val entry = result.entries.single().second
+        assertTrue(entry is CatalogEntry.BuiltIn)
+        assertTrue((entry as CatalogEntry.BuiltIn).expression.contains("licenseName = \"Mapbox ToS\""), entry.expression)
+    }
+
+    @Test
     fun `resolve() includes an assets entry in the generated catalog tagged ASSET`() {
         val overrides =
             OverridesConfig(

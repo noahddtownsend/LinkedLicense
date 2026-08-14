@@ -46,6 +46,35 @@ class TomlOverridesParserTest {
     }
 
     @Test
+    fun `parse() reads a Custom override entry with licenseName`() {
+        val config =
+            parse(
+                """
+                [overrides]
+                "com.mapbox.maps:android" = { license = "Custom", elementLicensed = "Mapbox Maps SDK", author = "Mapbox", text = "...", licenseName = "Mapbox ToS" }
+                """.trimIndent(),
+            )
+
+        val entry = config.overrides.getValue("com.mapbox.maps:android") as OverrideSpec.BuiltIn
+        assertEquals(License.Custom::class, entry.kClass)
+        assertEquals("Mapbox ToS", entry.licenseName)
+    }
+
+    @Test
+    fun `parse() leaves licenseName null when absent`() {
+        val config =
+            parse(
+                """
+                [overrides]
+                "com.example:foo" = { license = "Apache2" }
+                """.trimIndent(),
+            )
+
+        val entry = config.overrides.getValue("com.example:foo") as OverrideSpec.BuiltIn
+        assertEquals(null, entry.licenseName)
+    }
+
+    @Test
     fun `parse() reads a custom override entry`() {
         val config =
             parse(

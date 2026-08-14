@@ -118,6 +118,7 @@ object CatalogGenerator {
                                 author = overrideSpec.author ?: coordinate.group,
                                 url = overrideSpec.url,
                                 text = overrideSpec.text,
+                                licenseName = overrideSpec.licenseName,
                             ),
                         )
                 }
@@ -212,6 +213,7 @@ object CatalogGenerator {
                                 url = spec.url,
                                 text = spec.text,
                                 isAsset = true,
+                                licenseName = spec.licenseName,
                             ),
                         )
                 }
