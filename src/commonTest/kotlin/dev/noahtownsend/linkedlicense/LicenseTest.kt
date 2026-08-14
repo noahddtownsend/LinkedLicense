@@ -291,6 +291,28 @@ class LicenseTest {
     }
 
     @Test
+    fun `copyleftStrength is STRONG for GPL, WEAK for LGPL and MPL, NONE otherwise`() {
+        val strongCopyleft = listOf(License.Gpl2(elementLicensed = "e", author = "a"), License.Gpl3(elementLicensed = "e", author = "a"))
+        val weakCopyleft =
+            listOf(
+                License.Lgpl2_1(elementLicensed = "e", author = "a"),
+                License.Lgpl3(elementLicensed = "e", author = "a"),
+                License.Mpl2(elementLicensed = "e", author = "a"),
+            )
+        val noneCopyleft =
+            listOf(
+                License.MIT(elementLicensed = "e", author = "a", year = "2020"),
+                License.Apache2(elementLicensed = "e", author = "a"),
+                License.Cc0(elementLicensed = "e", author = "a"),
+                License.Custom(elementLicensed = "e", author = "a", text = "t"),
+            )
+
+        strongCopyleft.forEach { assertEquals(License.CopyleftStrength.STRONG, it.copyleftStrength, "${it::class.simpleName}") }
+        weakCopyleft.forEach { assertEquals(License.CopyleftStrength.WEAK, it.copyleftStrength, "${it::class.simpleName}") }
+        noneCopyleft.forEach { assertEquals(License.CopyleftStrength.NONE, it.copyleftStrength, "${it::class.simpleName}") }
+    }
+
+    @Test
     fun `Ofl licenseText is non-blank and not copyleft`() {
         val license = License.Ofl(elementLicensed = "Cinzel Decorative Font", author = "Matt Tindal")
 
@@ -344,6 +366,31 @@ class LicenseTest {
 
         assertEquals("Some bespoke license text.", license.licenseText)
         assertFalse(license.isCopyleft)
+    }
+
+    @Test
+    fun `Custom shortName falls back to Custom when licenseName is null`() {
+        val license =
+            License.Custom(
+                elementLicensed = "Acme Internal SDK",
+                author = "Acme Corp",
+                text = "Some bespoke license text.",
+            )
+
+        assertEquals("Custom", license.shortName)
+    }
+
+    @Test
+    fun `Custom shortName uses licenseName when provided`() {
+        val license =
+            License.Custom(
+                elementLicensed = "Mapbox Maps SDK",
+                author = "Mapbox",
+                text = "Some bespoke license text.",
+                licenseName = "Mapbox ToS",
+            )
+
+        assertEquals("Mapbox ToS", license.shortName)
     }
 
     @Test

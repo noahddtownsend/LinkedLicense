@@ -19,17 +19,27 @@ abstract class License(
      */
     enum class Kind { DEPENDENCY, ASSET }
 
+    /** Distinguishes strong copyleft (GPL-family) from weak copyleft (LGPL/MPL). */
+    enum class CopyleftStrength { NONE, WEAK, STRONG }
+
     /**
      * The full text of the license to be displayed.
      */
     abstract val licenseText: String
 
     /**
-     * `true` for licenses with reciprocal/share-alike source-disclosure obligations
+     * Non-`NONE` for licenses with reciprocal/share-alike source-disclosure obligations
      * (the GPL family and MPL). Consuming build tooling may use this to guard against
-     * accidentally shipping copyleft-encumbered dependencies.
+     * accidentally shipping copyleft-encumbered dependencies. Subclasses declaring copyleft
+     * status override this rather than [isCopyleft], which is derived from it.
      */
-    open val isCopyleft: Boolean get() = false
+    open val copyleftStrength: CopyleftStrength get() = CopyleftStrength.NONE
+
+    /**
+     * `true` whenever [copyleftStrength] isn't [CopyleftStrength.NONE]. Derived, not
+     * overridable — existing code checking `license.isCopyleft` keeps working unchanged.
+     */
+    val isCopyleft: Boolean get() = copyleftStrength != CopyleftStrength.NONE
 
     /**
      * A short, display-friendly label for this license (e.g. `"MIT"`, `"Apache 2.0"`).
@@ -541,7 +551,7 @@ $elementLicensed by $author is in the public domain because its copyright protec
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
     ) : License(elementLicensed, author, url, kind) {
-        override val isCopyleft: Boolean get() = true
+        override val copyleftStrength get() = CopyleftStrength.STRONG
 
         override val shortName: String get() = "GPL-2.0"
 
@@ -559,7 +569,7 @@ Full license text: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html"""
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
     ) : License(elementLicensed, author, url, kind) {
-        override val isCopyleft: Boolean get() = true
+        override val copyleftStrength get() = CopyleftStrength.STRONG
 
         override val shortName: String get() = "GPL-3.0"
 
@@ -577,7 +587,7 @@ Full license text: https://www.gnu.org/licenses/gpl-3.0.html"""
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
     ) : License(elementLicensed, author, url, kind) {
-        override val isCopyleft: Boolean get() = true
+        override val copyleftStrength get() = CopyleftStrength.WEAK
 
         override val shortName: String get() = "LGPL-2.1"
 
@@ -595,7 +605,7 @@ Full license text: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html"""
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
     ) : License(elementLicensed, author, url, kind) {
-        override val isCopyleft: Boolean get() = true
+        override val copyleftStrength get() = CopyleftStrength.WEAK
 
         override val shortName: String get() = "LGPL-3.0"
 
@@ -613,7 +623,7 @@ Full license text: https://www.gnu.org/licenses/lgpl-3.0.html"""
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
     ) : License(elementLicensed, author, url, kind) {
-        override val isCopyleft: Boolean get() = true
+        override val copyleftStrength get() = CopyleftStrength.WEAK
 
         override val shortName: String get() = "MPL-2.0"
 
@@ -879,10 +889,11 @@ Full legal code: https://opendatacommons.org/licenses/odbl/1-0/"""
         override val elementLicensed: String,
         override val author: String,
         val text: String,
+        val licenseName: String? = null,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
     ) : License(elementLicensed, author, url, kind) {
-        override val shortName: String get() = "Custom"
+        override val shortName: String get() = licenseName ?: "Custom"
 
         override val licenseText: String get() = text
     }
