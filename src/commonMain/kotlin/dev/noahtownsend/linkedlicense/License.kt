@@ -23,12 +23,24 @@ abstract class License(
      */
     open val isCopyleft: Boolean get() = false
 
+    /**
+     * A short, display-friendly label for this license (e.g. `"MIT"`, `"Apache 2.0"`).
+     *
+     * Intended for compact UI surfaces (chips, corner labels) where the full [licenseText]
+     * or class name would be too verbose. [License] is `abstract`, not `sealed`, so this is
+     * an overridable property rather than an exhaustive `when` over subtypes — custom
+     * subclasses should override it with their own short label.
+     */
+    open val shortName: String get() = "Custom"
+
     data class MIT(
         override val elementLicensed: String,
         override val author: String,
         val year: String,
         override val url: String? = null,
     ) : License(elementLicensed, author, url) {
+        override val shortName: String get() = "MIT"
+
         override val licenseText: String
             get() =
                 MIT_TEMPLATE
@@ -65,6 +77,8 @@ SOFTWARE."""
         override val author: String,
         override val url: String? = null,
     ) : License(elementLicensed, author, url) {
+        override val shortName: String get() = "Apache 1.1"
+
         override val licenseText: String = APACHE1_1_TEXT
 
         companion object {
@@ -124,6 +138,8 @@ information on the Apache Software Foundation, please see
         override val author: String,
         override val url: String? = null,
     ) : License(elementLicensed, author, url) {
+        override val shortName: String get() = "Apache 2.0"
+
         override val licenseText: String = APACHE2_TEXT
 
         companion object {
@@ -337,6 +353,8 @@ limitations under the License."""
         val year: String,
         override val url: String? = null,
     ) : License(elementLicensed, author, url) {
+        override val shortName: String get() = "BSD-2-Clause"
+
         override val licenseText: String
             get() =
                 BSD2_TEMPLATE
@@ -377,6 +395,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."""
         val year: String,
         override val url: String? = null,
     ) : License(elementLicensed, author, url) {
+        override val shortName: String get() = "BSD-3-Clause"
+
         override val licenseText: String
             get() =
                 BSD3_TEMPLATE
@@ -421,6 +441,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."""
         val year: String,
         override val url: String? = null,
     ) : License(elementLicensed, author, url) {
+        override val shortName: String get() = "ISC"
+
         override val licenseText: String
             get() =
                 ISC_TEMPLATE
@@ -451,6 +473,8 @@ PERFORMANCE OF THIS SOFTWARE."""
         override val author: String,
         override val url: String? = null,
     ) : License(elementLicensed, author, url) {
+        override val shortName: String get() = "Unlicense"
+
         override val licenseText: String = UNLICENSE_TEXT
 
         companion object {
@@ -483,6 +507,8 @@ For more information, please refer to <https://unlicense.org>"""
         override val author: String,
         override val url: String? = null,
     ) : License(elementLicensed, author, url) {
+        override val shortName: String get() = "Public Domain"
+
         override val licenseText: String
             get() =
                 """Public Domain
@@ -495,6 +521,8 @@ $elementLicensed by $author has been dedicated to the public domain. To the exte
         override val author: String,
         override val url: String? = null,
     ) : License(elementLicensed, author, url) {
+        override val shortName: String get() = "US Gov Public Domain"
+
         override val licenseText: String
             get() =
                 """$elementLicensed by $author
@@ -508,6 +536,8 @@ As a work of the United States Government, this content is not subject to copyri
         override val url: String? = null,
     ) : License(elementLicensed, author, url) {
         override val isCopyleft: Boolean get() = true
+
+        override val shortName: String get() = "GPL-2.0"
 
         override val licenseText: String
             get() = """GNU General Public License, Version 2 (GPL-2.0)
@@ -524,6 +554,8 @@ Full license text: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html"""
     ) : License(elementLicensed, author, url) {
         override val isCopyleft: Boolean get() = true
 
+        override val shortName: String get() = "GPL-3.0"
+
         override val licenseText: String
             get() = """GNU General Public License, Version 3 (GPL-3.0)
 
@@ -538,6 +570,8 @@ Full license text: https://www.gnu.org/licenses/gpl-3.0.html"""
         override val url: String? = null,
     ) : License(elementLicensed, author, url) {
         override val isCopyleft: Boolean get() = true
+
+        override val shortName: String get() = "LGPL-2.1"
 
         override val licenseText: String
             get() = """GNU Lesser General Public License, Version 2.1 (LGPL-2.1)
@@ -554,6 +588,8 @@ Full license text: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html"""
     ) : License(elementLicensed, author, url) {
         override val isCopyleft: Boolean get() = true
 
+        override val shortName: String get() = "LGPL-3.0"
+
         override val licenseText: String
             get() = """GNU Lesser General Public License, Version 3 (LGPL-3.0)
 
@@ -569,6 +605,8 @@ Full license text: https://www.gnu.org/licenses/lgpl-3.0.html"""
     ) : License(elementLicensed, author, url) {
         override val isCopyleft: Boolean get() = true
 
+        override val shortName: String get() = "MPL-2.0"
+
         override val licenseText: String
             get() = """Mozilla Public License, Version 2.0 (MPL-2.0)
 
@@ -582,6 +620,8 @@ Full license text: https://www.mozilla.org/en-US/MPL/2.0/"""
         override val author: String,
         override val url: String? = null,
     ) : License(elementLicensed, author, url) {
+        override val shortName: String get() = "CC0-1.0"
+
         override val licenseText: String
             get() = """CC0 1.0 Universal (Public Domain Dedication)
 
@@ -609,6 +649,8 @@ Full legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode"""
         override val author: String,
         override val url: String? = null,
     ) : License(elementLicensed, author, url) {
+        override val shortName: String get() = "CC ${variant.name.replace('_', '-')} $version"
+
         override val licenseText: String
             get() {
                 val conditions = mutableListOf("Attribution — You must give appropriate credit to $author, provide a link to the license, and indicate if changes were made.")
@@ -652,6 +694,8 @@ Full legal code: https://creativecommons.org/licenses/${variant.slug}/$version/l
         override val author: String,
         override val url: String? = null,
     ) : License(elementLicensed, author, url) {
+        override val shortName: String get() = "OFL-1.1"
+
         override val licenseText: String = OFL_TEXT
 
         companion object {
@@ -749,6 +793,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE."""
         override val author: String,
         override val url: String? = null,
     ) : License(elementLicensed, author, url) {
+        override val shortName: String get() = "OGL v$version"
+
         override val licenseText: String
             get() =
                 OGL_TEMPLATE
@@ -799,6 +845,8 @@ Full license text: https://www.nationalarchives.gov.uk/doc/open-government-licen
         override val author: String = "Mapbox",
         override val url: String? = "https://www.mapbox.com/about/maps/",
     ) : License(elementLicensed, author, url) {
+        override val shortName: String get() = "Mapbox ToS"
+
         override val licenseText: String = MAPBOX_TEXT
 
         companion object {
@@ -821,6 +869,8 @@ OpenStreetMap data is licensed under the Open Data Commons Open Database License
         val text: String,
         override val url: String? = null,
     ) : License(elementLicensed, author, url) {
+        override val shortName: String get() = "Custom"
+
         override val licenseText: String get() = text
     }
 }
