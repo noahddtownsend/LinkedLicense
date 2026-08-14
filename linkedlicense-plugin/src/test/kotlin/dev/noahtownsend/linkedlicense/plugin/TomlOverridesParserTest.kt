@@ -122,4 +122,41 @@ class TomlOverridesParserTest {
 
         assertEquals(LicensePolicy.EMPTY, config.licensePolicy)
     }
+
+    @Test
+    fun `parse() reads an assets entry keyed by an arbitrary identifier`() {
+        val config =
+            parse(
+                """
+                [assets]
+                "cinzel-decorative-font" = { license = "Ofl", elementLicensed = "Cinzel Decorative Font", author = "Matt Tindal" }
+                """.trimIndent(),
+            )
+
+        val entry = config.assets.getValue("cinzel-decorative-font") as OverrideSpec.BuiltIn
+        assertEquals(License.Ofl::class, entry.kClass)
+        assertEquals("Cinzel Decorative Font", entry.elementLicensed)
+        assertEquals("Matt Tindal", entry.author)
+    }
+
+    @Test
+    fun `parse() reads a custom assets entry`() {
+        val config =
+            parse(
+                """
+                [assets]
+                "acme-dataset" = { license = "custom:com.acme.licenses.MyLicense" }
+                """.trimIndent(),
+            )
+
+        val entry = config.assets.getValue("acme-dataset") as OverrideSpec.Custom
+        assertEquals("com.acme.licenses.MyLicense", entry.fullyQualifiedName)
+    }
+
+    @Test
+    fun `parse() defaults assets to empty when absent`() {
+        val config = parse("[ignored]\n\"com.example:x\" = \"reason\"")
+
+        assertEquals(emptyMap(), config.assets)
+    }
 }

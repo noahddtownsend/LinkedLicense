@@ -42,6 +42,13 @@ data class OverridesConfig(
     val ignored: Map<String, String> = emptyMap(),
     val copyleftAllowed: Map<String, String> = emptyMap(),
     val licensePolicy: LicensePolicy = LicensePolicy.EMPTY,
+    /**
+     * `[assets]` (README §3.7) — non-dependency assets (fonts, datasets, images) keyed by an
+     * arbitrary asset identifier rather than a Gradle coordinate. Same value shape as
+     * `[overrides]`. Every entry is included unconditionally, tagged
+     * `kind = License.Kind.ASSET` — there's no matching/fail-on-unknown step for these.
+     */
+    val assets: Map<String, OverrideSpec> = emptyMap(),
 ) {
     companion object {
         val EMPTY = OverridesConfig()

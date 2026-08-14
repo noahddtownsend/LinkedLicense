@@ -108,6 +108,23 @@ class LinkedLicensePlugin : Plugin<Project> {
             )
         }
 
+        if (result.assetCopyleftOffenders.isNotEmpty()) {
+            throw GradleException(
+                "generateLicenseCatalog found copyleft-licensed [assets] entries not allow-listed:\n" +
+                    result.assetCopyleftOffenders.joinToString("\n") { "  - $it" } +
+                    "\n\nAdd a [copyleft-allowed] entry in ${extension.overridesFile.path}, " +
+                    "or set failOnCopyleft = false.",
+            )
+        }
+
+        if (result.assetPolicyOffenders.isNotEmpty()) {
+            throw GradleException(
+                "generateLicenseCatalog found [assets] entries that violate [license-policy]:\n" +
+                    result.assetPolicyOffenders.joinToString("\n") { "  - ${it.assetKey} (${it.licenseTypeId})" } +
+                    "\n\nAdjust the [license-policy] allow/block lists in ${extension.overridesFile.path}.",
+            )
+        }
+
         if (extension.copyRequiredNotices) {
             writeThirdPartyNotices(project, configuration, coordinates, overrides)
         }
@@ -118,7 +135,7 @@ class LinkedLicensePlugin : Plugin<Project> {
         generatedFile.writeText(
             renderGeneratedLicensesFile(
                 packageName = "dev.noahtownsend.linkedlicense.generated",
-                entries = result.entries.map { it.second },
+                entries = result.entries.map { it.second } + result.assetEntries.map { it.second },
             ),
         )
     }

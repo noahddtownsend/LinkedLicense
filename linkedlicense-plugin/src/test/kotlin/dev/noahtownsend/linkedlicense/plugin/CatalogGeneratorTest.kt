@@ -249,4 +249,68 @@ class CatalogGeneratorTest {
         assertTrue(entry is CatalogEntry.CustomRef)
         assertEquals("com.acme.licenses.MyCompanyLicense", entry.fullyQualifiedName)
     }
+
+    @Test
+    fun `resolve() includes an assets entry in the generated catalog tagged ASSET`() {
+        val overrides =
+            OverridesConfig(
+                assets = mapOf("cinzel-font" to OverrideSpec.BuiltIn(License.Ofl::class, "Cinzel Decorative Font", "Matt Tindal", null, null)),
+            )
+
+        val result =
+            CatalogGenerator.resolve(
+                coordinates = emptyList(),
+                pomInfoOf = { PomInfo(emptyList(), null) },
+                overrides = overrides,
+                failOnCopyleft = true,
+                failOnUnknown = true,
+            )
+
+        assertEquals(1, result.assetEntries.size)
+        val entry = result.assetEntries.single()
+        assertEquals("cinzel-font", entry.first)
+        val builtIn = entry.second as CatalogEntry.BuiltIn
+        assertTrue(builtIn.expression.contains("kind = License.Kind.ASSET"))
+    }
+
+    @Test
+    fun `resolve() fails a GPL-typed assets entry by default same as a GPL dependency`() {
+        val overrides =
+            OverridesConfig(
+                assets = mapOf("gpl-dataset" to OverrideSpec.BuiltIn(License.Gpl3::class, null, null, null, null)),
+            )
+
+        val result =
+            CatalogGenerator.resolve(
+                coordinates = emptyList(),
+                pomInfoOf = { PomInfo(emptyList(), null) },
+                overrides = overrides,
+                failOnCopyleft = true,
+                failOnUnknown = true,
+            )
+
+        assertEquals(listOf("gpl-dataset"), result.assetCopyleftOffenders)
+        assertTrue(result.assetEntries.isEmpty())
+    }
+
+    @Test
+    fun `resolve() fails an assets entry whose license type is block-listed`() {
+        val overrides =
+            OverridesConfig(
+                assets = mapOf("mit-dataset" to OverrideSpec.BuiltIn(License.MIT::class, null, null, null, null)),
+                licensePolicy = LicensePolicy(block = setOf("MIT")),
+            )
+
+        val result =
+            CatalogGenerator.resolve(
+                coordinates = emptyList(),
+                pomInfoOf = { PomInfo(emptyList(), null) },
+                overrides = overrides,
+                failOnCopyleft = true,
+                failOnUnknown = true,
+            )
+
+        assertEquals(listOf(AssetPolicyOffender("mit-dataset", "MIT")), result.assetPolicyOffenders)
+        assertTrue(result.assetEntries.isEmpty())
+    }
 }

@@ -72,7 +72,19 @@ object TomlOverridesParser {
                 block = policyTable?.getArrayOrEmpty("block")?.toList()?.map { it.toString() }?.toSet().orEmpty(),
             )
 
-        return OverridesConfig(overrides, ignored, copyleftAllowed, licensePolicy)
+        val assetsTable = result.getTable("assets")
+        val assets =
+            assetsTable
+                ?.keySet()
+                .orEmpty()
+                .associateWith { rawKey ->
+                    val entryTable =
+                        assetsTable!!.getTable(listOf(rawKey))
+                            ?: throw GradleException("[assets] entry '$rawKey' in ${file.path} must be a table.")
+                    parseOverrideEntry(rawKey, entryTable, file)
+                }
+
+        return OverridesConfig(overrides, ignored, copyleftAllowed, licensePolicy, assets)
     }
 
     private fun parseOverrideEntry(

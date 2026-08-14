@@ -6,19 +6,30 @@ data class PolicyOffender(
     val licenseTypeId: String,
 )
 
+/** An `[assets]` entry (README §3.7) that failed the `[license-policy]` allow/block check. */
+data class AssetPolicyOffender(
+    val assetKey: String,
+    val licenseTypeId: String,
+)
+
 /** The outcome of resolving one coordinate's license against overrides/matcher/copyleft guard. */
 data class CatalogResult(
     val entries: List<Pair<Coordinate, CatalogEntry>>,
     val unresolved: List<Coordinate>,
     val copyleftOffenders: List<Coordinate>,
     val policyOffenders: List<PolicyOffender>,
+    /** `[assets]` entries (README §3.7) — no matching/fail-on-unknown step, always resolved. */
+    val assetEntries: List<Pair<String, CatalogEntry>> = emptyList(),
+    val assetCopyleftOffenders: List<String> = emptyList(),
+    val assetPolicyOffenders: List<AssetPolicyOffender> = emptyList(),
 )
 
 /**
- * The pure resolution core of `generateLicenseCatalog` (README §2.1 / §3.3 / §3.5 / §3.6) —
- * dedup already happened upstream ([collectResolvedComponents]); this decides, per
+ * The pure resolution core of `generateLicenseCatalog` (README §2.1 / §3.3 / §3.5 / §3.6 / §3.7)
+ * — dedup already happened upstream ([collectResolvedComponents]); this decides, per
  * coordinate, whether it's ignored, overridden, auto-matched, unresolved, a copyleft
- * offender, or a `[license-policy]` offender.
+ * offender, or a `[license-policy]` offender. `[assets]` entries (§3.7) go through the same
+ * copyleft/policy checks but skip matching entirely, since their license is supplied directly.
  */
 object CatalogGenerator {
     fun resolve(
@@ -133,6 +144,63 @@ object CatalogGenerator {
             }
         }
 
-        return CatalogResult(entries, unresolved, copyleftOffenders, policyOffenders)
+        val assetEntries = mutableListOf<Pair<String, CatalogEntry>>()
+        val assetCopyleftOffenders = mutableListOf<String>()
+        val assetPolicyOffenders = mutableListOf<AssetPolicyOffender>()
+
+        for ((assetKey, spec) in overrides.assets) {
+            when (spec) {
+                is OverrideSpec.Custom -> {
+                    val typeId = "custom:${spec.fullyQualifiedName}"
+
+                    if (!overrides.licensePolicy.isAllowed(typeId)) {
+                        assetPolicyOffenders += AssetPolicyOffender(assetKey, typeId)
+                        continue
+                    }
+
+                    assetEntries += assetKey to CatalogEntry.CustomRef(spec.fullyQualifiedName)
+                }
+
+                is OverrideSpec.BuiltIn -> {
+                    val typeId = BuiltInLicenses.policyId(spec.kClass)
+
+                    if (!overrides.licensePolicy.isAllowed(typeId)) {
+                        assetPolicyOffenders += AssetPolicyOffender(assetKey, typeId)
+                        continue
+                    }
+
+                    if (BuiltInLicenses.isCopyleft(spec.kClass) &&
+                        failOnCopyleft &&
+                        !overrides.copyleftAllowed.containsKey(assetKey)
+                    ) {
+                        assetCopyleftOffenders += assetKey
+                        continue
+                    }
+
+                    assetEntries +=
+                        assetKey to
+                        CatalogEntry.BuiltIn(
+                            buildInExpression(
+                                kClass = spec.kClass,
+                                elementLicensed = spec.elementLicensed ?: assetKey,
+                                author = spec.author ?: assetKey,
+                                url = spec.url,
+                                text = spec.text,
+                                isAsset = true,
+                            ),
+                        )
+                }
+            }
+        }
+
+        return CatalogResult(
+            entries = entries,
+            unresolved = unresolved,
+            copyleftOffenders = copyleftOffenders,
+            policyOffenders = policyOffenders,
+            assetEntries = assetEntries,
+            assetCopyleftOffenders = assetCopyleftOffenders,
+            assetPolicyOffenders = assetPolicyOffenders,
+        )
     }
 }

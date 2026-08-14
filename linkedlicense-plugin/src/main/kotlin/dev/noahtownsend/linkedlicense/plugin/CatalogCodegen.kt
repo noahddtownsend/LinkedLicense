@@ -29,6 +29,7 @@ fun buildInExpression(
     author: String,
     url: String?,
     text: String?,
+    isAsset: Boolean = false,
 ): String {
     val simpleName = BuiltInLicenses.simpleNameOf(kClass)
     val args = mutableListOf("elementLicensed = ${elementLicensed.kotlinStringLiteral()}", "author = ${author.kotlinStringLiteral()}")
@@ -43,6 +44,10 @@ fun buildInExpression(
 
     if (url != null) {
         args += "url = ${url.kotlinStringLiteral()}"
+    }
+
+    if (isAsset) {
+        args += "kind = License.Kind.ASSET"
     }
 
     return "License.$simpleName(${args.joinToString(", ")})"
