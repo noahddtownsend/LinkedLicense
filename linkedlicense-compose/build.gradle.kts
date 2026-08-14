@@ -7,6 +7,14 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.vanniktechMavenPublish)
+
+    // Dogfooding: scans this module's own dependency graph (Compose Multiplatform
+    // runtime/foundation/material3/resources et al.) and generates its license catalog.
+    // Resolved from the local `functionalTestRepo` staged by `linkedlicense-plugin` - see
+    // settings.gradle.kts's `pluginManagement` block for why, and the populate command. Not
+    // self-referential the way applying this to `linkedlicense-plugin` itself would be: this
+    // module doesn't build the plugin, it only consumes it.
+    id("dev.noahtownsend.linkedlicense") version "0.9.0"
 }
 
 group = "dev.noahtownsend"
