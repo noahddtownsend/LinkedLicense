@@ -519,6 +519,22 @@ $elementLicensed by $author has been dedicated to the public domain. To the exte
 As a work of the United States Government, this content is not subject to copyright protection within the United States. See 17 U.S.C. § 105 ("Copyright protection under this title is not available for any work of the United States Government."). It is in the public domain within the United States; use outside the United States may be subject to the copyright laws of other jurisdictions.${if (url != null) "\nSource / URL: $url" else ""}"""
     }
 
+    data class CopyrightExpired(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+        val jurisdiction: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val shortName: String get() = "Public Domain (Expired)"
+
+        override val licenseText: String
+            get() =
+                """Public Domain (Copyright Expired)
+
+$elementLicensed by $author is in the public domain because its copyright protection has expired under applicable law.${if (jurisdiction != null) " The term is asserted to have run out under $jurisdiction copyright law." else " No specific jurisdiction is asserted; this is a general claim that the work's copyright term has run out and it is in the public domain."} This is not a voluntary dedication and not a government-work exemption — the protection period has simply ended.${if (url != null) "\nSource / URL: $url" else ""}"""
+    }
+
     data class Gpl2(
         override val elementLicensed: String,
         override val author: String,

@@ -120,6 +120,42 @@ class LicenseTest {
     }
 
     @Test
+    fun `CopyrightExpired licenseText is non-blank and not copyleft`() {
+        val license = License.CopyrightExpired(elementLicensed = "Foo", author = "Jane Doe")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertFalse(license.isCopyleft)
+    }
+
+    @Test
+    fun `CopyrightExpired with null jurisdiction produces a general public domain claim`() {
+        val license = License.CopyrightExpired(elementLicensed = "Foo", author = "Jane Doe", jurisdiction = null)
+
+        assertTrue(license.licenseText.contains("public domain"))
+        assertTrue(license.licenseText.contains("No specific jurisdiction is asserted"))
+    }
+
+    @Test
+    fun `CopyrightExpired with jurisdiction names it in the licenseText`() {
+        val license =
+            License.CopyrightExpired(
+                elementLicensed = "Foo",
+                author = "Jane Doe",
+                jurisdiction = "United States",
+            )
+
+        assertTrue(license.licenseText.contains("United States"))
+        assertFalse(license.licenseText.contains("No specific jurisdiction is asserted"))
+    }
+
+    @Test
+    fun `CopyrightExpired shortName is Public Domain (Expired)`() {
+        val license = License.CopyrightExpired(elementLicensed = "e", author = "a")
+
+        assertEquals("Public Domain (Expired)", license.shortName)
+    }
+
+    @Test
     fun `Gpl2 licenseText is non-blank and is copyleft`() {
         val license = License.Gpl2(elementLicensed = "Foo", author = "Jane Doe")
 
@@ -232,6 +268,7 @@ class LicenseTest {
                 License.Unlicense(elementLicensed = "e", author = "a"),
                 License.PublicDomain(elementLicensed = "e", author = "a"),
                 License.UsGovernmentPublicDomain(elementLicensed = "e", author = "a"),
+                License.CopyrightExpired(elementLicensed = "e", author = "a"),
                 License.Cc0(elementLicensed = "e", author = "a"),
                 License.CreativeCommons(variant = CcVariant.BY, version = CcVersion.V4_0, elementLicensed = "e", author = "a"),
                 License.CreativeCommons(variant = CcVariant.BY_SA, version = CcVersion.V4_0, elementLicensed = "e", author = "a"),
@@ -336,6 +373,7 @@ class LicenseTest {
                 License.Unlicense(elementLicensed = "e", author = "a"),
                 License.PublicDomain(elementLicensed = "e", author = "a"),
                 License.UsGovernmentPublicDomain(elementLicensed = "e", author = "a"),
+                License.CopyrightExpired(elementLicensed = "e", author = "a"),
                 License.Cc0(elementLicensed = "e", author = "a"),
                 License.CreativeCommons(variant = CcVariant.BY, version = CcVersion.V4_0, elementLicensed = "e", author = "a"),
                 License.CreativeCommons(variant = CcVariant.BY_SA, version = CcVersion.V4_0, elementLicensed = "e", author = "a"),
