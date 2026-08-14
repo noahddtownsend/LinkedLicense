@@ -48,18 +48,33 @@ abstract class License(
 | `License.Ofl` | — | `false` |
 | `License.Unlicense` | — | `false` |
 | `License.Cc0` | — | `false` |
-| `License.CreativeCommons` | `variant: CcVariant`, `version: String` | `false`* |
-| `License.OpenGovernmentLicence` | `jurisdiction: String`, `version: String` | `false` |
+| `License.CreativeCommons` | `variant: CcVariant`, `version: CcVersion` | `false`* |
+| `License.OpenGovernmentLicence` | `jurisdiction: String`, `version: OglVersion` | `false` |
 | `License.PublicDomain` | — | `false` |
 | `License.UsGovernmentPublicDomain` | — | `false` |
 | `License.Mapbox` | defaults provided | `false` |
+| `License.Odbl` | — | `false`\*\* |
 | `License.Custom` | `text: String` | `false` (escape hatch for anything not listed above) |
 
 \* `CreativeCommons` variants with `NC`/`ND`/`SA` terms carry redistribution *conditions*,
 but none require releasing your own source code the way GPL-family licenses do, so they're
 not classified as copyleft for the purposes of [§3.5](#35-copyleft-guard-on-by-default).
 
-`CcVariant` is `BY | BY_SA | BY_ND | BY_NC | BY_NC_SA | BY_NC_ND`.
+\*\* `Odbl` (Open Data Commons Open Database License 1.0) is a share-alike license for
+*databases*, not source code — used for e.g. OpenStreetMap data. Classified the same way as
+CC BY-SA above, for the same reason: it has redistribution conditions but doesn't require
+releasing your own software source.
+
+`CcVariant` is `BY | BY_SA | BY_ND | BY_NC | BY_NC_SA | BY_NC_ND`. `CcVersion` is `V1_0 |
+V2_0 | V2_5 | V3_0 | V4_0`. `OglVersion` is `V1_0 | V2_0 | V3_0` (the UK Open Government
+Licence's three published versions). These are closed, known sets, so they're modeled as
+enums rather than free-form version strings — a typo like `"4.O"` (letter O) fails to
+compile instead of silently generating a broken `creativecommons.org` URL at runtime.
+
+All built-in license text is produced by direct Kotlin string interpolation of the
+constructor arguments you pass (`"...$elementLicensed by $author..."`), not by
+search-and-replace over a placeholder template — there's no `{YEAR}`/`{AUTHOR}` token
+syntax to get wrong or leave unreplaced.
 
 `isCopyleft` is `true` for `Gpl2`, `Gpl3`, `Lgpl2_1`, `Lgpl3`, `Mpl2` — anything with
 reciprocal/share-alike source-disclosure obligations. LGPL and MPL are *weak* copyleft
@@ -76,7 +91,7 @@ val licenses = listOf(
     License.Apache2(elementLicensed = "Ktor", author = "JetBrains"),
     License.CreativeCommons(
         variant = CcVariant.BY_SA,
-        version = "4.0",
+        version = CcVersion.V4_0,
         elementLicensed = "Wikimedia Commons Media",
         author = "Wikimedia Contributors",
     ),
