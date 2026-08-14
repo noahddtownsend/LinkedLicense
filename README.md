@@ -24,11 +24,19 @@ abstract class License(
     open val kind: Kind = Kind.DEPENDENCY,
 ) {
     abstract val licenseText: String
-    open val isCopyleft: Boolean get() = false
+    open val copyleftStrength: CopyleftStrength get() = CopyleftStrength.NONE
+    val isCopyleft: Boolean get() = copyleftStrength != CopyleftStrength.NONE
 
     enum class Kind { DEPENDENCY, ASSET }
+    enum class CopyleftStrength { NONE, WEAK, STRONG }
 }
 ```
+
+`copyleftStrength` replaces the old plain `isCopyleft: Boolean` flag with the weak/strong
+distinction described below — `isCopyleft` is now a derived, non-overridable convenience
+(`true` whenever `copyleftStrength != NONE`), so existing code checking `license.isCopyleft`
+keeps working unchanged; only subclasses that need to *declare* copyleft status override
+`copyleftStrength` instead.
 
 `kind` distinguishes an actual code dependency (the default) from a bundled non-dependency
 asset — a dataset, image, font, or similar — that carries its own license/attribution but
@@ -41,29 +49,29 @@ alongside scanned dependencies without hand-merging two lists yourself.
 
 ### Built-in types
 
-| Type | Constructor params (beyond `elementLicensed`/`author`/`url`) | `isCopyleft` |
+| Type | Constructor params (beyond `elementLicensed`/`author`/`url`) | `copyleftStrength` |
 |---|---|---|
-| `License.MIT` | `year: String` | `false` |
-| `License.Apache1_1` | — | `false` |
-| `License.Apache2` | — | `false` |
-| `License.Bsd2Clause` | `year: String` | `false` |
-| `License.Bsd3Clause` | `year: String` | `false` |
-| `License.Isc` | `year: String` | `false` |
-| `License.Gpl2` | — | `true` |
-| `License.Gpl3` | — | `true` |
-| `License.Lgpl2_1` | — | `true` |
-| `License.Lgpl3` | — | `true` |
-| `License.Mpl2` | — | `true` |
-| `License.Ofl` | — | `false` |
-| `License.Unlicense` | — | `false` |
-| `License.Cc0` | — | `false` |
-| `License.CreativeCommons` | `variant: CcVariant`, `version: CcVersion` | `false`* |
-| `License.OpenGovernmentLicence` | `jurisdiction: String`, `version: OglVersion` | `false` |
-| `License.PublicDomain` | — | `false` |
-| `License.UsGovernmentPublicDomain` | — | `false` |
-| `License.CopyrightExpired` | `jurisdiction: String? = null` | `false` |
-| `License.Odbl` | — | `false`\*\* |
-| `License.Custom` | `text: String` | `false` (escape hatch for anything not listed above) |
+| `License.MIT` | `year: String` | `NONE` |
+| `License.Apache1_1` | — | `NONE` |
+| `License.Apache2` | — | `NONE` |
+| `License.Bsd2Clause` | `year: String` | `NONE` |
+| `License.Bsd3Clause` | `year: String` | `NONE` |
+| `License.Isc` | `year: String` | `NONE` |
+| `License.Gpl2` | — | `STRONG` |
+| `License.Gpl3` | — | `STRONG` |
+| `License.Lgpl2_1` | — | `WEAK` |
+| `License.Lgpl3` | — | `WEAK` |
+| `License.Mpl2` | — | `WEAK` |
+| `License.Ofl` | — | `NONE` |
+| `License.Unlicense` | — | `NONE` |
+| `License.Cc0` | — | `NONE` |
+| `License.CreativeCommons` | `variant: CcVariant`, `version: CcVersion` | `NONE`* |
+| `License.OpenGovernmentLicence` | `jurisdiction: String`, `version: OglVersion` | `NONE` |
+| `License.PublicDomain` | — | `NONE` |
+| `License.UsGovernmentPublicDomain` | — | `NONE` |
+| `License.CopyrightExpired` | `jurisdiction: String? = null` | `NONE` |
+| `License.Odbl` | — | `NONE`\*\* |
+| `License.Custom` | `text: String`, `licenseName: String? = null` | `NONE` (escape hatch for anything not listed above) |
 
 \* `CreativeCommons` variants with `NC`/`ND`/`SA` terms carry redistribution *conditions*,
 but none require releasing your own source code the way GPL-family licenses do, so they're
@@ -91,12 +99,18 @@ plus-50-or-70-years, but not universally), so `CopyrightExpired` takes an option
 if you're asserting the work is public domain more broadly (e.g. clearly pre-1900 with no
 plausible live copyright anywhere).
 
-`isCopyleft` is `true` for `Gpl2`, `Gpl3`, `Lgpl2_1`, `Lgpl3`, `Mpl2` — anything with
-reciprocal/share-alike source-disclosure obligations. LGPL and MPL are *weak* copyleft
-(obligations apply per-file/per-library, not to your whole program) versus GPL's *strong*
-copyleft (obligations apply to the whole combined work); both default to failing the build
-under the copyleft guard below, since either can require you to release source you didn't
-intend to.
+`copyleftStrength` is non-`NONE` for `Gpl2`/`Gpl3` (`STRONG`) and `Lgpl2_1`/`Lgpl3`/`Mpl2`
+(`WEAK`) — anything with reciprocal/share-alike source-disclosure obligations. LGPL and MPL
+are *weak* copyleft (obligations apply per-file/per-library, not to your whole program)
+versus GPL's *strong* copyleft (obligations apply to the whole combined work); both default
+to failing the build under the copyleft guard below, since either can require you to release
+source you didn't intend to — but the guard lets you configure weak-copyleft handling
+separately from strong (§3.5).
+
+`License.Custom`'s optional `licenseName` names the license itself (e.g. `"Acme EULA"`),
+distinct from `elementLicensed` (what's *being* licensed, e.g. `"Acme SDK"`) — it becomes
+`shortName` when provided (falling back to the literal string `"Custom"` when omitted), so a
+custom entry can show a real label in UI instead of a generic placeholder.
 
 ### Example
 
@@ -172,6 +186,7 @@ check (§3.3, §3.5, §3.6) applies to that unioned set.
            author = "Mapbox",
            url = "https://www.mapbox.com/about/maps/",
            text = "...",
+           licenseName = "Mapbox ToS",
        ),
    )
    ```
@@ -251,7 +266,8 @@ with its ecosystem, in the *same* `[overrides]`/`[ignored]`/`[copyleft-allowed]`
 linkedLicense {
     overridesFile = file("linkedlicense.toml") // default shown
     copyRequiredNotices = true                 // default shown
-    failOnCopyleft = true                      // default shown
+    failOnCopyleft = true                      // default shown, see §3.5
+    failOnSoftCopyleft = null                  // default shown, see §3.5 — null follows failOnCopyleft
     failOnUnknown = true                       // default shown
     bestEffortLicenseFetch = false             // default shown, see §2.3
 }
@@ -263,7 +279,7 @@ Overrides live in their own version-catalog-shaped TOML file.
 
 ```toml
 [overrides]
-"com.mapbox.maps:android" = { license = "Custom", elementLicensed = "Mapbox Maps", author = "Mapbox", text = "..." }
+"com.mapbox.maps:android" = { license = "Custom", elementLicensed = "Mapbox Maps", author = "Mapbox", text = "...", licenseName = "Mapbox ToS" }
 "libs.okio" = { license = "Apache2" } # resolved via the version catalog, see 3.2
 
 [ignored]
@@ -362,6 +378,30 @@ When a matched or overridden dependency resolves to a license with `isCopyleft =
 (GPL2/GPL3/LGPL2.1/LGPL3/MPL2 among the built-ins), `generateLicenseCatalog` fails the build
 — same aggregated-list-of-offenders style as §3.3 — unless that coordinate has a
 `[copyleft-allowed]` entry, or you set `failOnCopyleft = false` project-wide.
+
+`failOnCopyleft` governs strong copyleft (`copyleftStrength == STRONG`, e.g. GPL) and is
+also the *default* for weak copyleft (`copyleftStrength == WEAK`, e.g. LGPL/MPL) when you
+haven't said anything more specific. To treat weak copyleft differently from strong, set
+`failOnSoftCopyleft` (`Boolean?`, default `null`):
+
+```kotlin
+linkedLicense {
+    failOnCopyleft = true          // governs strong copyleft; the fallback for weak copyleft
+    failOnSoftCopyleft = false     // explicit override for weak copyleft only — takes
+                                    // precedence over failOnCopyleft whenever it's non-null
+}
+```
+
+- `failOnSoftCopyleft = null` (the default): weak-copyleft dependencies are governed by
+  `failOnCopyleft`, same as strong ones — no behavior change from a single unified setting.
+- `failOnSoftCopyleft = false`: weak-copyleft dependencies never fail the build regardless of
+  `failOnCopyleft`, while strong copyleft still does (unless `failOnCopyleft` is also
+  `false`).
+- `failOnSoftCopyleft = true`: weak-copyleft dependencies always fail the build (subject to
+  `[copyleft-allowed]` same as anything else) even if `failOnCopyleft = false` has turned the
+  guard off for strong copyleft.
+- `[copyleft-allowed]` is the same escape hatch for both strengths — it's a per-coordinate
+  override, not a strength-specific one.
 
 ### 3.6 License allow/block list (opt-in, empty by default)
 
