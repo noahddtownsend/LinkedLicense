@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="licenses">Licencie</string>
+    <string name="license_by">od %1$s</string>
+</resources>

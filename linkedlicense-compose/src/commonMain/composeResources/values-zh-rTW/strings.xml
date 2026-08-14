@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="licenses">授權條款</string>
+    <string name="license_by">%1$s 製作</string>
+</resources>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="licenses">许可证</string>
+    <string name="license_by">%1$s 制作</string>
+</resources>

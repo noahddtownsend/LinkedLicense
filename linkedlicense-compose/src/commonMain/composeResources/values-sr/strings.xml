@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="licenses">Лиценце</string>
+    <string name="license_by">аутор: %1$s</string>
+</resources>
