@@ -31,6 +31,8 @@ internal object CatalogTaskExecution {
         outputDir: File,
         includeAssets: Boolean,
     ) {
+        OverridesFileScaffold.ensureExists(extension.overridesFile)
+
         val componentIds = collectResolvedComponents(configuration.incoming.resolutionResult.root)
         generateCatalogFromComponents(project, extension, componentIds, listOf(configuration), outputDir, includeAssets)
     }
@@ -47,6 +49,8 @@ internal object CatalogTaskExecution {
         configurations: List<Configuration>,
         outputDir: File,
     ) {
+        OverridesFileScaffold.ensureExists(extension.overridesFile)
+
         val componentsByCoordinate = linkedMapOf<Coordinate, ModuleComponentIdentifier>()
 
         configurations.forEach { configuration ->
