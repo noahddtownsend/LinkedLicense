@@ -8,9 +8,6 @@ you — so you never have to hand-type another `NOTICE` entry.
 - **License (of this library's own code)**: MIT. See [`LICENSE`](./LICENSE).
 - **Group / artifact**: `dev.noahtownsend:linkedlicense`.
 
-This README is the contract for both halves of the library — the runtime `License` API and
-the build-time scanning plugin — written before either was implemented.
-
 ## 1. The `License` API (runtime)
 
 `dev.noahtownsend.linkedlicense.License` is an `abstract class`. A closed, built-in set of
