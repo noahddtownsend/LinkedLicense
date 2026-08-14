@@ -6,6 +6,7 @@ gradle/wrapper/
 .idea/
 .kotlin/
 local.properties
+secrets/
 *.iml
 .DS_Store
 out/
