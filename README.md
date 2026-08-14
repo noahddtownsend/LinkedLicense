@@ -226,18 +226,32 @@ check (§3.3, §3.5, §3.6) applies to that unioned set.
 7. Once every dependency is resolved (matched, overridden, or ignored) and no failure was
    triggered, generates `GeneratedLicenses.kt` (an object exposing `all: List<License>`)
    into `build/generated/linkedlicense/<sourceSet>/`, registered as an extra Kotlin source
-   directory so it compiles like ordinary code:
+   directory so it compiles like ordinary code — **package-qualified per source set**
+   (`dev.noahtownsend.linkedlicense.generated.<sourceSet lowercased>`, e.g. `...generated.
+   commonmain`, `...generated.jvmmain`), not just directory-qualified:
 
    ```kotlin
    // build/generated/linkedlicense/commonMain/.../GeneratedLicenses.kt
+   package dev.noahtownsend.linkedlicense.generated.commonmain
+
    object GeneratedLicenses {
        val all: List<License> = listOf(/* ... */)
    }
    ```
 
+   This matters even though each source set's generated file lives in its own build
+   directory: Kotlin's default hierarchy template merges `commonMain` sources into every
+   platform target's own compilation, so a `jvmMain` compile sees *both* `commonMain`'s
+   generated file and `jvmMain`'s own — two identically-packaged, identically-named `object
+   GeneratedLicenses` declarations in the same compilation is a redeclaration error. Distinct
+   packages avoid that; import the specific one you want (`commonmain` for the cross-platform
+   union, or a specific platform's own narrower catalog).
+
    Merge it with your own hand-curated entries as needed:
 
    ```kotlin
+   import dev.noahtownsend.linkedlicense.generated.commonmain.GeneratedLicenses
+
    val allLicenses = GeneratedLicenses.all + listOf(
        License.Custom(
            elementLicensed = "Mapbox Maps",
