@@ -1,5 +1,6 @@
 plugins {
     `java-gradle-plugin`
+    `maven-publish`
     id("org.jetbrains.kotlin.jvm")
 }
 
@@ -56,6 +57,33 @@ dependencies {
     functionalTestImplementation(project(":"))
 }
 
+// Kotlin Multiplatform functional tests need the plugin under test to interoperate at runtime
+// with a real `kotlin("multiplatform")` plugin application in the fixture project - i.e. they
+// need to prove the compileOnly classloader fix (see the dependencies block above) actually
+// works. GradleRunner.withPluginClasspath() (used by every other functional test here) injects
+// the plugin under test via a separate mechanism (PluginUnderTestMetadata) that does NOT get
+// the same shared-classpath treatment Gradle gives plugins resolved together through the normal
+// `plugins {}` DSL, so it doesn't exercise that interop at all - a KMP fixture applying the
+// plugin that way throws NoClassDefFoundError even though the fix genuinely works for a real
+// consumer. Publishing to a local repo and having KMP fixtures resolve the plugin from there via
+// ordinary `plugins { id(...) version ... }` resolution matches real-world usage instead.
+// Shared with the root project (`build.gradle.kts`), which publishes into the same directory:
+// `implementation(project(":"))` above publishes as a dependency on the root module's own
+// coordinates (Gradle Module Metadata resolves the actual `jvm` variant via that root module's
+// "available-at" pointer at consumption time), so a fixture resolving this plugin from a repo
+// needs the root project's `jvm`/`kotlinMultiplatform` publications sitting in that same repo
+// too - see the root build script's comment for the full explanation.
+val functionalTestRepo = rootProject.layout.buildDirectory.dir("functionalTestRepo")
+
+publishing {
+    repositories {
+        maven {
+            name = "functionalTest"
+            url = uri(functionalTestRepo)
+        }
+    }
+}
+
 val functionalTest by tasks.registering(Test::class) {
     description = "Runs the functional tests (Gradle TestKit)."
     group = "verification"
@@ -63,6 +91,14 @@ val functionalTest by tasks.registering(Test::class) {
     classpath = sourceSets["functionalTest"].runtimeClasspath
     useJUnitPlatform()
     shouldRunAfter(tasks.test)
+    dependsOn("publishAllPublicationsToFunctionalTestRepository")
+    // Only the root project's `jvm` and `kotlinMultiplatform` publications - not "publish all",
+    // which would also require an Android SDK/iOS toolchain to build the android/iOS/js/wasmJs
+    // targets just to run functional tests. See the root build script's comment.
+    dependsOn(":publishJvmPublicationToFunctionalTestRepository")
+    dependsOn(":publishKotlinMultiplatformPublicationToFunctionalTestRepository")
+    systemProperty("linkedlicense.functionalTestRepo", functionalTestRepo.get().asFile.absolutePath)
+    systemProperty("linkedlicense.version", version.toString())
 }
 
 tasks.test {
