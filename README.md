@@ -147,6 +147,7 @@ linkedLicense {
     overridesFile = file("linkedlicense.toml") // default shown
     copyRequiredNotices = true                 // default shown
     failOnCopyleft = true                      // default shown
+    failOnUnknown = true                       // default shown
 }
 ```
 
@@ -193,14 +194,16 @@ a `libs.*`-style alias resolved against your own `libs.versions.toml` via Gradle
 correct automatically if the underlying coordinate changes but the catalog alias doesn't,
 instead of silently going stale.
 
-### 3.3 Fail-on-unknown (always on)
+### 3.3 Fail-on-unknown (on by default)
 
 A dependency that can't be auto-matched and has no `[overrides]`/`[ignored]` entry fails
 `generateLicenseCatalog`. The task collects *every* unresolved coordinate before failing, so
-you fix them all in one pass instead of one build cycle at a time. There is no setting to
-disable this outright — unlicensed/unknown dependencies should never silently ship. If you
-need to bypass it for one specific build (not recommended), skip the task directly:
-`./gradlew build -x generateLicenseCatalog`.
+you fix them all in one pass instead of one build cycle at a time. Unlicensed/unknown
+dependencies should never silently ship, so this defaults to on; set `failOnUnknown = false`
+if you need `GeneratedLicenses.kt` to still generate with unmatched dependencies simply
+omitted (not recommended — you lose the guarantee that every shipped dependency is
+accounted for). This is separate from `-x generateLicenseCatalog`, which skips the whole
+task rather than relaxing this one check.
 
 ### 3.4 Required-notice copying (on by default)
 
