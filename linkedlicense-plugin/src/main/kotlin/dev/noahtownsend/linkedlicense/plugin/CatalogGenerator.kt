@@ -38,6 +38,14 @@ object CatalogGenerator {
         overrides: OverridesConfig,
         failOnCopyleft: Boolean,
         failOnUnknown: Boolean,
+        /**
+         * Whether to process `overrides.assets` (README §3.7) into the result. `[assets]`
+         * entries aren't tied to any one Kotlin source set/target, so a multiplatform project
+         * only wants them folded into the `commonMain` catalog - not repeated once per
+         * platform target's own catalog too. Single-source-set (plain JVM) projects and the
+         * `commonMain` union both pass `true` (the default).
+         */
+        includeAssets: Boolean = true,
     ): CatalogResult {
         val entries = mutableListOf<Pair<Coordinate, CatalogEntry>>()
         val unresolved = mutableListOf<Coordinate>()
@@ -148,7 +156,7 @@ object CatalogGenerator {
         val assetCopyleftOffenders = mutableListOf<String>()
         val assetPolicyOffenders = mutableListOf<AssetPolicyOffender>()
 
-        for ((assetKey, spec) in overrides.assets) {
+        for ((assetKey, spec) in if (includeAssets) overrides.assets else emptyMap()) {
             when (spec) {
                 is OverrideSpec.Custom -> {
                     val typeId = "custom:${spec.fullyQualifiedName}"
