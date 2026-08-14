@@ -24,10 +24,23 @@ abstract class License(
     open val elementLicensed: String,
     open val author: String,
     open val url: String? = null,
+    open val kind: Kind = Kind.DEPENDENCY,
 ) {
     abstract val licenseText: String
     open val isCopyleft: Boolean get() = false
+
+    enum class Kind { DEPENDENCY, ASSET }
 }
+```
+
+`kind` distinguishes an actual code dependency (the default) from a bundled non-dependency
+asset — a dataset, image, font, or similar — that carries its own license/attribution but
+was never resolved off a Gradle dependency graph. It's a constructor parameter on the base
+class, not a per-subtype thing: the same `License.MIT`, say, can represent either an MIT
+library dependency or an MIT-licensed font depending on how you construct it. Consuming UI (e.g. [`linkedlicense-compose`, §5](#5-compose-multiplatform-ui-components-optional))
+can use it to group or label entries separately ("Dependencies" vs. "Data & Assets"). See
+[§3.7](#37-non-dependency-assets) for how the scanning plugin lets you declare these
+alongside scanned dependencies without hand-merging two lists yourself.
 ```
 
 ### Built-in types
@@ -52,7 +65,6 @@ abstract class License(
 | `License.OpenGovernmentLicence` | `jurisdiction: String`, `version: OglVersion` | `false` |
 | `License.PublicDomain` | — | `false` |
 | `License.UsGovernmentPublicDomain` | — | `false` |
-| `License.Mapbox` | defaults provided | `false` |
 | `License.Odbl` | — | `false`\*\* |
 | `License.Custom` | `text: String` | `false` (escape hatch for anything not listed above) |
 
@@ -144,7 +156,14 @@ This registers one task per Kotlin source set: **`generateLicenseCatalog`** (e.g
    Merge it with your own hand-curated entries as needed:
 
    ```kotlin
-   val allLicenses = GeneratedLicenses.all + listOf(License.Mapbox())
+   val allLicenses = GeneratedLicenses.all + listOf(
+       License.Custom(
+           elementLicensed = "Mapbox Maps",
+           author = "Mapbox",
+           url = "https://www.mapbox.com/about/maps/",
+           text = "...",
+       ),
+   )
    ```
 
 ### 2.2 Why this is opt-in and per-project
@@ -266,6 +285,30 @@ block = ["Gpl3", "AGPL3"]    # optional
   copyleft is a legal-risk default; `[license-policy]` is your own project's explicit
   policy — so both apply independently.
 
+### 3.7 Non-dependency assets
+
+Not everything that needs attribution is a Gradle dependency — bundled fonts, datasets,
+images, and similar assets carry licenses/attribution too, but there's nothing to resolve
+off the dependency graph for them. Declare these in `linkedlicense.toml` instead of hand-
+merging a second list into `GeneratedLicenses.all` yourself:
+
+```toml
+[assets]
+"mwgg-airports-db" = { license = "MIT", elementLicensed = "Airports JSON Database", author = "Martin Weyer (mwgg)", year = "2018", url = "https://github.com/mwgg/Airports" }
+"cinzel-decorative-font" = { license = "Ofl", elementLicensed = "Cinzel Decorative Font", author = "Matt Tindal", url = "https://fonts.google.com/specimen/Cinzel+Decorative" }
+```
+
+- The key is an arbitrary asset identifier you choose (not a `group:artifact` coordinate —
+  there's no dependency behind it to look one up from). The value shape matches
+  `[overrides]` entries: a built-in `license` type name (or a `custom:` reference) plus that
+  type's constructor arguments.
+- Every `[assets]` entry is included in `GeneratedLicenses.kt` unconditionally, tagged
+  `kind = License.Kind.ASSET` (see §1) — there's no matching/fail-on-unknown step for these,
+  since you're supplying the license directly rather than asking the plugin to infer it.
+- `[license-policy]` (§3.6) and the copyleft guard (§3.5) still apply to `[assets]` entries
+  the same as scanned dependencies — a GPL-licensed dataset needs the same
+  `[copyleft-allowed]` treatment a GPL-licensed library would.
+
 ## 4. Custom licenses in code
 
 `License` is `abstract`, not `sealed` — your own codebase can declare real subclasses (with
@@ -293,7 +336,40 @@ Reference it from `linkedlicense.toml` by fully-qualified symbol name, prefixed 
 `GeneratedLicenses.kt` rather than trying to instantiate anything itself — your compiled
 code is the source of truth for what it does.
 
-## 5. Publishing this library (maintainer notes)
+## 5. Compose Multiplatform UI components (optional)
+
+A separate module, `dev.noahtownsend:linkedlicense-compose` (package
+`dev.noahtownsend.linkedlicense.compose`), provides ready-made Compose Multiplatform
+components so you don't have to build a licenses screen by hand. All three are
+theme-agnostic — they read colors/typography from whatever `MaterialTheme` you already wrap
+them in and never apply one of their own — and each builds on the one before it:
+
+1. **`LicensesList(licenses: List<License>, modifier: Modifier = Modifier)`** — a scrollable,
+   sorted-by-author list where each entry expands/collapses to reveal its full
+   `licenseText`.
+2. **`LicensesDialog(licenses: List<License>, onDismissRequest: () -> Unit, modifier: Modifier = Modifier)`**
+   — a full-screen dialog wrapping `LicensesList`, with an "X" close button. Independently
+   usable: drive its visibility from your own state/trigger without touching element 3.
+3. **`LicensesButton(licenses: List<License>, modifier: Modifier = Modifier)`** — the full
+   solution: a row/text labeled "Licenses" (translated — see below) that manages its own
+   dialog-visibility state and shows `LicensesDialog` on tap.
+
+```kotlin
+// Full solution
+LicensesButton(licenses = GeneratedLicenses.all)
+
+// Or drive the dialog yourself
+var showLicenses by remember { mutableStateOf(false) }
+if (showLicenses) {
+    LicensesDialog(licenses = GeneratedLicenses.all, onDismissRequest = { showLicenses = false })
+}
+```
+
+The "Licenses" label ships translated via Compose Multiplatform resources across ~40
+locales (matching the wording TrekOn's own settings screen already used, for its 6
+overlapping locales).
+
+## 6. Publishing this library (maintainer notes)
 
 Published to Maven Central under the `dev.noahtownsend` namespace via the
 [Central Portal](https://central.sonatype.com), using
@@ -313,7 +389,7 @@ One-time setup (only the namespace owner can do this):
 5. Cut a `vX.Y.Z` release tag. `.github/workflows/publish.yml` runs
    `./gradlew publishAndReleaseToMavenCentral`.
 
-## 6. Using this library before it's published
+## 7. Using this library before it's published
 
 While the first Maven Central release is pending, consume this repo via a Gradle composite
 build:
