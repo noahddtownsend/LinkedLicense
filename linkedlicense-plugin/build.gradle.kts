@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "dev.noahtownsend"
-version = "0.1.0"
+version = "0.9.0"
 
 kotlin {
     jvmToolchain(21)

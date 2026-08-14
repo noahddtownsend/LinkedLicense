@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "dev.noahtownsend"
-version = "0.1.0"
+version = "0.9.0"
 
 // See the root build script's `mavenPublishing` block for the credentials/signing notes -
 // identical convention applies here.

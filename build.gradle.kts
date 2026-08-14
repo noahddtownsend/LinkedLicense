@@ -10,7 +10,7 @@ plugins {
 // Gradle Module Metadata with an empty "group" - which is invalid and fails to parse for any
 // consumer (see linkedlicense-plugin/build.gradle.kts's functionalTest local-repo publishing).
 group = "dev.noahtownsend"
-version = "0.1.0"
+version = "0.9.0"
 
 // Publishes this module's `jvm`/`kotlinMultiplatform` (and other target) publications to
 // Maven Central via the Central Portal. Credentials/signing come from environment variables
