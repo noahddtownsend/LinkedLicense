@@ -40,6 +40,12 @@ object CatalogGenerator {
         pomInfoOf: (Coordinate) -> PomInfo,
         overrides: OverridesConfig,
         failOnCopyleft: Boolean,
+        /**
+         * Explicit override for weak-copyleft dependencies (README §3.5): `null` (the default)
+         * defers to [failOnCopyleft]; non-`null` takes precedence over it for weak copyleft
+         * only. Strong copyleft is governed by [failOnCopyleft] alone.
+         */
+        failOnSoftCopyleft: Boolean? = null,
         failOnUnknown: Boolean,
         /**
          * Whether to process `overrides.assets` (README §3.7) into the result. `[assets]`
@@ -63,6 +69,18 @@ object CatalogGenerator {
         val unresolved = mutableListOf<Coordinate>()
         val copyleftOffenders = mutableListOf<Coordinate>()
         val policyOffenders = mutableListOf<PolicyOffender>()
+
+        /**
+         * Whether a dependency with this [kClass]'s copyleft strength fails the guard, per
+         * README §3.5: `failOnCopyleft` alone decides strong copyleft; weak copyleft is decided
+         * by `failOnSoftCopyleft ?: failOnCopyleft`.
+         */
+        fun failsCopyleftGuard(kClass: KClass<out License>): Boolean =
+            when (BuiltInLicenses.copyleftStrength(kClass)) {
+                License.CopyleftStrength.STRONG -> failOnCopyleft
+                License.CopyleftStrength.WEAK -> failOnSoftCopyleft ?: failOnCopyleft
+                License.CopyleftStrength.NONE -> false
+            }
 
         fun policyId(spec: OverrideSpec?, matched: kotlin.reflect.KClass<out dev.noahtownsend.linkedlicense.License>?): String =
             when {
@@ -101,8 +119,7 @@ object CatalogGenerator {
                         continue
                     }
 
-                    if (BuiltInLicenses.isCopyleft(overrideSpec.kClass) &&
-                        failOnCopyleft &&
+                    if (failsCopyleftGuard(overrideSpec.kClass) &&
                         !overrides.copyleftAllowed.containsKey(coordinate.moduleId)
                     ) {
                         copyleftOffenders += coordinate
@@ -147,8 +164,7 @@ object CatalogGenerator {
                         continue
                     }
 
-                    if (BuiltInLicenses.isCopyleft(matched) &&
-                        failOnCopyleft &&
+                    if (failsCopyleftGuard(matched) &&
                         !overrides.copyleftAllowed.containsKey(coordinate.moduleId)
                     ) {
                         copyleftOffenders += coordinate
@@ -195,8 +211,7 @@ object CatalogGenerator {
                         continue
                     }
 
-                    if (BuiltInLicenses.isCopyleft(spec.kClass) &&
-                        failOnCopyleft &&
+                    if (failsCopyleftGuard(spec.kClass) &&
                         !overrides.copyleftAllowed.containsKey(assetKey)
                     ) {
                         assetCopyleftOffenders += assetKey

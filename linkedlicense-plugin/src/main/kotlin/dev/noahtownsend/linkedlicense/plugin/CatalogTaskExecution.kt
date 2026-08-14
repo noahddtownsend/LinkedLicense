@@ -127,6 +127,7 @@ internal object CatalogTaskExecution {
                 pomInfoOf = { pomInfoCache[it] ?: PomInfo(emptyList(), null) },
                 overrides = overrides,
                 failOnCopyleft = extension.failOnCopyleft,
+                failOnSoftCopyleft = extension.failOnSoftCopyleft,
                 failOnUnknown = extension.failOnUnknown,
                 includeAssets = includeAssets,
                 bestEffortFetch = bestEffortFetch,

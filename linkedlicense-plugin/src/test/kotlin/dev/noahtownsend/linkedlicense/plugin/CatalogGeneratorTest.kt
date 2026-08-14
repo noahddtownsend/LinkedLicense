@@ -9,6 +9,7 @@ class CatalogGeneratorTest {
     private val apacheCoord = Coordinate("com.example", "apache-lib", "1.0")
     private val unknownCoord = Coordinate("com.example", "unknown-lib", "1.0")
     private val gplCoord = Coordinate("com.example", "gpl-lib", "1.0")
+    private val lgplCoord = Coordinate("com.example", "lgpl-lib", "1.0")
 
     private fun pomInfo(licenseName: String?): PomInfo = PomInfo(licenses = listOfNotNull(licenseName?.let { PomLicense(it, null) }), organizationName = null)
 
@@ -138,6 +139,71 @@ class CatalogGeneratorTest {
                 pomInfoOf = pomInfoFor(mapOf(gplCoord to pomInfo("GPL-3.0"))),
                 overrides = OverridesConfig.EMPTY,
                 failOnCopyleft = false,
+                failOnUnknown = true,
+            )
+
+        assertTrue(result.copyleftOffenders.isEmpty())
+        assertEquals(1, result.entries.size)
+    }
+
+    @Test
+    fun `resolve() fails an LGPL-licensed dependency by default, same as failOnCopyleft governs GPL`() {
+        val result =
+            CatalogGenerator.resolve(
+                coordinates = listOf(lgplCoord),
+                pomInfoOf = pomInfoFor(mapOf(lgplCoord to pomInfo("LGPL-2.1"))),
+                overrides = OverridesConfig.EMPTY,
+                failOnCopyleft = true,
+                failOnUnknown = true,
+            )
+
+        assertEquals(listOf(lgplCoord), result.copyleftOffenders)
+        assertTrue(result.entries.isEmpty())
+    }
+
+    @Test
+    fun `resolve() lets an LGPL dependency through when failOnSoftCopyleft is false while GPL still fails`() {
+        val result =
+            CatalogGenerator.resolve(
+                coordinates = listOf(gplCoord, lgplCoord),
+                pomInfoOf = pomInfoFor(mapOf(gplCoord to pomInfo("GPL-3.0"), lgplCoord to pomInfo("LGPL-2.1"))),
+                overrides = OverridesConfig.EMPTY,
+                failOnCopyleft = true,
+                failOnSoftCopyleft = false,
+                failOnUnknown = true,
+            )
+
+        assertEquals(listOf(gplCoord), result.copyleftOffenders)
+        assertEquals(1, result.entries.size)
+    }
+
+    @Test
+    fun `resolve() fails an LGPL dependency when failOnSoftCopyleft is true even though failOnCopyleft is false`() {
+        val result =
+            CatalogGenerator.resolve(
+                coordinates = listOf(lgplCoord),
+                pomInfoOf = pomInfoFor(mapOf(lgplCoord to pomInfo("LGPL-2.1"))),
+                overrides = OverridesConfig.EMPTY,
+                failOnCopyleft = false,
+                failOnSoftCopyleft = true,
+                failOnUnknown = true,
+            )
+
+        assertEquals(listOf(lgplCoord), result.copyleftOffenders)
+        assertTrue(result.entries.isEmpty())
+    }
+
+    @Test
+    fun `resolve() lets an LGPL dependency through when copyleft-allowed even with failOnSoftCopyleft true`() {
+        val overrides = OverridesConfig(copyleftAllowed = mapOf(lgplCoord.moduleId to "build-time only"))
+
+        val result =
+            CatalogGenerator.resolve(
+                coordinates = listOf(lgplCoord),
+                pomInfoOf = pomInfoFor(mapOf(lgplCoord to pomInfo("LGPL-2.1"))),
+                overrides = overrides,
+                failOnCopyleft = false,
+                failOnSoftCopyleft = true,
                 failOnUnknown = true,
             )
 
@@ -279,7 +345,7 @@ class CatalogGeneratorTest {
 
         val entry = result.entries.single().second
         assertTrue(entry is CatalogEntry.BuiltIn)
-        assertTrue((entry as CatalogEntry.BuiltIn).expression.contains("licenseName = \"Mapbox ToS\""), entry.expression)
+        assertTrue(entry.expression.contains("licenseName = \"Mapbox ToS\""), entry.expression)
     }
 
     @Test

@@ -23,9 +23,21 @@ open class LinkedLicenseExtension(
 
     /**
      * Fails `generateLicenseCatalog` when a resolved dependency's license has
-     * `isCopyleft == true` and isn't covered by `[copyleft-allowed]`. Default: `true`.
+     * `isCopyleft == true` and isn't covered by `[copyleft-allowed]`. Governs strong copyleft
+     * (`copyleftStrength == STRONG`, e.g. GPL) unconditionally, and is also the default for
+     * weak copyleft (`copyleftStrength == WEAK`, e.g. LGPL/MPL) whenever [failOnSoftCopyleft]
+     * is left `null`. Default: `true`.
      */
     var failOnCopyleft: Boolean = true
+
+    /**
+     * Explicit override for weak-copyleft (`copyleftStrength == WEAK`, e.g. LGPL/MPL)
+     * dependencies, independent of [failOnCopyleft]. `null` (the default) defers to
+     * [failOnCopyleft]; `true`/`false` take precedence over it for weak copyleft only — strong
+     * copyleft is unaffected either way. `[copyleft-allowed]` still applies to both strengths.
+     * Default: `null`.
+     */
+    var failOnSoftCopyleft: Boolean? = null
 
     /**
      * Fails `generateLicenseCatalog` when a dependency can't be auto-matched and has no

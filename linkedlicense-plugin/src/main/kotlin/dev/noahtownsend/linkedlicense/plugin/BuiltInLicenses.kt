@@ -32,18 +32,21 @@ object BuiltInLicenses {
             "Custom" to License.Custom::class,
         )
 
-    private val copyleft: Set<KClass<out License>> =
-        setOf(
-            License.Gpl2::class,
-            License.Gpl3::class,
-            License.Lgpl2_1::class,
-            License.Lgpl3::class,
-            License.Mpl2::class,
+    private val copyleftStrength: Map<KClass<out License>, License.CopyleftStrength> =
+        mapOf(
+            License.Gpl2::class to License.CopyleftStrength.STRONG,
+            License.Gpl3::class to License.CopyleftStrength.STRONG,
+            License.Lgpl2_1::class to License.CopyleftStrength.WEAK,
+            License.Lgpl3::class to License.CopyleftStrength.WEAK,
+            License.Mpl2::class to License.CopyleftStrength.WEAK,
         )
 
     fun bySimpleName(name: String): KClass<out License>? = bySimpleName[name]
 
-    fun isCopyleft(kClass: KClass<out License>): Boolean = kClass in copyleft
+    fun copyleftStrength(kClass: KClass<out License>): License.CopyleftStrength =
+        copyleftStrength[kClass] ?: License.CopyleftStrength.NONE
+
+    fun isCopyleft(kClass: KClass<out License>): Boolean = copyleftStrength(kClass) != License.CopyleftStrength.NONE
 
     fun simpleNameOf(kClass: KClass<out License>): String =
         bySimpleName.entries.first { it.value == kClass }.key
