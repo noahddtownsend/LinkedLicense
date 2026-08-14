@@ -646,4 +646,181 @@ ${conditions.joinToString("\n") { "- $it" }}
 Full legal code: https://creativecommons.org/licenses/${variant.slug}/$version/legalcode"""
             }
     }
+
+    data class Ofl(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+    ) : License(elementLicensed, author, url) {
+        override val licenseText: String = OFL_TEXT
+
+        companion object {
+            private const val OFL_TEXT = """SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+
+PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide
+development of collaborative font projects, to support the font creation
+efforts of academic and linguistic communities, and to provide a free and
+open framework in which fonts may be shared and improved in partnership
+with others.
+
+The OFL allows the licensed fonts to be used, studied, modified and
+redistributed freely as long as they are not sold by themselves. The
+fonts, including any derivative works, can be bundled, embedded,
+redistributed and/or sold with any software provided that any reserved
+names are not used by derivative works. The fonts and derivatives,
+however, cannot be released under any other type of license. The
+requirement for fonts to remain under this license does not apply
+to any document created using the fonts or their derivatives.
+
+DEFINITIONS
+"Font Software" refers to the set of files released by the Copyright
+Holder(s) under this license and clearly marked as such. This may
+include source files, build scripts and documentation.
+
+"Reserved Font Name" refers to any names specified as such after the
+copyright statement(s).
+
+"Original Version" refers to the collection of Font Software components
+as distributed by the Copyright Holder(s).
+
+"Modified Version" refers to any derivative made by adding to, deleting,
+or substituting -- in part or in whole -- any of the components of the
+Original Version, by changing formats or by porting the Font Software to
+a new environment.
+
+"Author" refers to any designer, engineer, programmer, technical
+writer or other person who contributed to the Font Software.
+
+PERMISSION & CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of the Font Software, to use, study, copy, merge, embed, modify,
+redistribute, and sell modified and unmodified copies of the Font
+Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components,
+in Original or Modified Versions, may be sold by itself.
+
+2) Original or Modified Versions of the Font Software may be bundled,
+redistributed and/or sold with any software, provided that each copy
+contains the above copyright notice and this license. These can be
+included either as stand-alone text files, human-readable headers or
+in the appropriate machine-readable metadata fields within text or
+binary files as long as those fields can be easily viewed by the user.
+
+3) No Modified Version of the Font Software may use the Reserved Font
+Name(s) unless explicit written permission is granted by the corresponding
+Copyright Holder. This restriction only applies to the primary font name as
+presented to the users.
+
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
+Software shall not be used to promote, endorse or advertise any
+Modified Version, except to acknowledge the contribution(s) of the
+Copyright Holder(s) and the Author(s) or with their explicit written
+permission.
+
+5) The Font Software, modified or unmodified, in part or in whole,
+must be distributed entirely under this license, and must not be
+distributed under any other license. The requirement for fonts to
+remain under this license does not apply to any document created
+using the Font Software.
+
+TERMINATION
+This license becomes null and void if any of the above conditions are
+not met.
+
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+OTHER DEALINGS IN THE FONT SOFTWARE."""
+        }
+    }
+
+    data class OpenGovernmentLicence(
+        val jurisdiction: String,
+        val version: String,
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+    ) : License(elementLicensed, author, url) {
+        override val licenseText: String
+            get() =
+                OGL_TEMPLATE
+                    .replace("{JURISDICTION}", jurisdiction)
+                    .replace("{VERSION}", version)
+                    .replace("{ELEMENT}", elementLicensed)
+                    .replace("{AUTHOR}", author)
+
+        companion object {
+            private const val OGL_TEMPLATE = """Open Government Licence v{VERSION}
+
+{ELEMENT} is published by {AUTHOR} and reproduced here under the terms of the Open Government Licence v{VERSION} ({JURISDICTION}).
+
+You are encouraged to use and re-use the Information that is available under this licence freely and flexibly, with only a few conditions.
+
+Using information under this licence
+Use of copyright and database right material expressly made available under this licence (the "Information") indicates your acceptance of the terms and conditions below.
+
+The Licensor grants you a worldwide, royalty-free, perpetual, non-exclusive licence to use the Information subject to the conditions below.
+
+This licence does not affect your freedom under fair dealing or fair use or any other copyright or database right exceptions and limitations.
+
+You are free to:
+- copy, publish, distribute and transmit the Information;
+- adapt the Information;
+- exploit the Information commercially and non-commercially, for example, by combining it with other Information, or by including it in your own product or application.
+
+You must, where you do any of the above:
+- acknowledge the source of the Information by including any attribution statement specified by the Information Provider(s) and, where possible, provide a link to this licence.
+
+If the Information Provider does not provide a specific attribution statement, you must use the following:
+"Contains public sector information licensed under the Open Government Licence v{VERSION}."
+
+You must not:
+- use the Information in a way that suggests any official status or that the Information Provider endorses you or your use of the Information;
+- use the Information in a way that is misleading or mislead others by implying that the information is other than official statistics;
+- use the Information to imply endorsement by the Information Provider of you or your use of the Information;
+- breach any of the terms of the Data Protection Act, the Privacy and Electronic Communications (EC Directive) Regulations, or the Human Rights Act.
+
+This licence does not grant you any right to use any personal data or logos, crests or the Royal Arms, or any other trade marks.
+
+Full license text: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/{VERSION}/"""
+        }
+    }
+
+    data class Mapbox(
+        override val elementLicensed: String = "Mapbox Maps",
+        override val author: String = "Mapbox",
+        override val url: String? = "https://www.mapbox.com/about/maps/",
+    ) : License(elementLicensed, author, url) {
+        override val licenseText: String = MAPBOX_TEXT
+
+        companion object {
+            private const val MAPBOX_TEXT = """© Mapbox, © OpenStreetMap
+
+This application uses Mapbox services to display maps and location data.
+By using this application, you agree to be bound by Mapbox's Terms of Service:
+https://www.mapbox.com/legal/tos/
+
+Mapbox Privacy Policy:
+https://www.mapbox.com/legal/privacy/
+
+OpenStreetMap data is licensed under the Open Data Commons Open Database License (ODbL)."""
+        }
+    }
+
+    data class Custom(
+        override val elementLicensed: String,
+        override val author: String,
+        val text: String,
+        override val url: String? = null,
+    ) : License(elementLicensed, author, url) {
+        override val licenseText: String get() = text
+    }
 }

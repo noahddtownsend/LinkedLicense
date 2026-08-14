@@ -237,6 +237,10 @@ class LicenseTest {
                 License.CreativeCommons(variant = CcVariant.BY_NC, version = "4.0", elementLicensed = "e", author = "a"),
                 License.CreativeCommons(variant = CcVariant.BY_NC_SA, version = "4.0", elementLicensed = "e", author = "a"),
                 License.CreativeCommons(variant = CcVariant.BY_NC_ND, version = "4.0", elementLicensed = "e", author = "a"),
+                License.Ofl(elementLicensed = "e", author = "a"),
+                License.OpenGovernmentLicence(jurisdiction = "UK", version = "3.0", elementLicensed = "e", author = "a"),
+                License.Mapbox(),
+                License.Custom(elementLicensed = "e", author = "a", text = "t"),
             )
 
         val copyleftTypes = allLicenses.filter { it.isCopyleft }.map { it::class.simpleName }.toSet()
@@ -245,6 +249,55 @@ class LicenseTest {
             setOf("Gpl2", "Gpl3", "Lgpl2_1", "Lgpl3", "Mpl2"),
             copyleftTypes,
         )
+    }
+
+    @Test
+    fun `Ofl licenseText is non-blank and not copyleft`() {
+        val license = License.Ofl(elementLicensed = "Cinzel Decorative Font", author = "Matt Tindal")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("SIL OPEN FONT LICENSE"))
+        assertFalse(license.isCopyleft)
+    }
+
+    @Test
+    fun `OpenGovernmentLicence licenseText contains jurisdiction and version substitutions`() {
+        val license =
+            License.OpenGovernmentLicence(
+                jurisdiction = "United Kingdom",
+                version = "3.0",
+                elementLicensed = "UK FCDO Travel Advice",
+                author = "Foreign, Commonwealth & Development Office",
+            )
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("Open Government Licence"))
+        assertTrue(license.licenseText.contains("United Kingdom"))
+        assertTrue(license.licenseText.contains("3.0"))
+        assertFalse(license.isCopyleft)
+    }
+
+    @Test
+    fun `Mapbox licenseText has sensible defaults`() {
+        val license = License.Mapbox()
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertEquals("Mapbox Maps", license.elementLicensed)
+        assertEquals("Mapbox", license.author)
+        assertFalse(license.isCopyleft)
+    }
+
+    @Test
+    fun `Custom licenseText is exactly the provided text`() {
+        val license =
+            License.Custom(
+                elementLicensed = "Acme Internal SDK",
+                author = "Acme Corp",
+                text = "Some bespoke license text.",
+            )
+
+        assertEquals("Some bespoke license text.", license.licenseText)
+        assertFalse(license.isCopyleft)
     }
 
     @Test
