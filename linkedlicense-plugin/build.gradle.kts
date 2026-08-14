@@ -35,7 +35,6 @@ val functionalTestImplementation: Configuration by configurations.getting {
 dependencies {
     implementation(project(":"))
     implementation(libs.tomlj)
-    compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:${libs.versions.kotlin.get()}")
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlin.test.junit5)

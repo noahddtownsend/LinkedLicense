@@ -8,9 +8,9 @@ import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedArtifactResult
 import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.artifacts.VersionCatalogsExtension
+import org.gradle.api.tasks.SourceTask
 import org.gradle.maven.MavenModule
 import org.gradle.maven.MavenPomArtifact
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import java.io.File
 
 /**
@@ -47,12 +47,15 @@ class LinkedLicensePlugin : Plugin<Project> {
                 }
             }
 
-        project.extensions.getByType(KotlinJvmProjectExtension::class.java).sourceSets
-            .getByName("main")
-            .kotlin
-            .srcDir(task.map { outputDir })
-
-        project.tasks.named("compileKotlin") { it.dependsOn(task) }
+        // Deliberately avoids referencing Kotlin-Gradle-plugin extension classes
+        // (e.g. KotlinJvmProjectExtension): those load on the *consuming* build's own Kotlin
+        // plugin classloader, which is a different one from this plugin's, and touching them
+        // here throws NoClassDefFoundError/ClassCastException at apply time. SourceTask is
+        // core Gradle API and shared across all plugin classloaders, so it's safe to cast to.
+        project.tasks.named("compileKotlin") { compileTask ->
+            compileTask.dependsOn(task)
+            (compileTask as SourceTask).source(outputDir)
+        }
     }
 
     private fun generateCatalog(
