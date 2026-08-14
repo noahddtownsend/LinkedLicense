@@ -501,4 +501,149 @@ $elementLicensed by $author has been dedicated to the public domain. To the exte
 
 As a work of the United States Government, this content is not subject to copyright protection within the United States. See 17 U.S.C. § 105 ("Copyright protection under this title is not available for any work of the United States Government."). It is in the public domain within the United States; use outside the United States may be subject to the copyright laws of other jurisdictions.${if (url != null) "\nSource / URL: $url" else ""}"""
     }
+
+    data class Gpl2(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+    ) : License(elementLicensed, author, url) {
+        override val isCopyleft: Boolean get() = true
+
+        override val licenseText: String
+            get() = """GNU General Public License, Version 2 (GPL-2.0)
+
+$elementLicensed by $author is licensed under the GNU General Public License, Version 2. This is a strong-copyleft license: you may run, study, share, and modify the software, but any work you distribute that incorporates or is derived from it must also be distributed as a whole under GPLv2, with source code made available and the same freedoms preserved for downstream recipients.${if (url != null) "\nSource / URL: $url" else ""}
+
+Full license text: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html"""
+    }
+
+    data class Gpl3(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+    ) : License(elementLicensed, author, url) {
+        override val isCopyleft: Boolean get() = true
+
+        override val licenseText: String
+            get() = """GNU General Public License, Version 3 (GPL-3.0)
+
+$elementLicensed by $author is licensed under the GNU General Public License, Version 3. This is a strong-copyleft license: you may run, study, share, and modify the software, but any work you distribute that incorporates or is derived from it must also be distributed as a whole under GPLv3, with source code made available, patent rights granted, and the same freedoms preserved for downstream recipients.${if (url != null) "\nSource / URL: $url" else ""}
+
+Full license text: https://www.gnu.org/licenses/gpl-3.0.html"""
+    }
+
+    data class Lgpl2_1(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+    ) : License(elementLicensed, author, url) {
+        override val isCopyleft: Boolean get() = true
+
+        override val licenseText: String
+            get() = """GNU Lesser General Public License, Version 2.1 (LGPL-2.1)
+
+$elementLicensed by $author is licensed under the GNU Lesser General Public License, Version 2.1. This is a weak-copyleft license: you may link against this library from software under other license terms, but modifications to the library itself must be released under the LGPL, and you must allow users to relink your application against a modified version of the library.${if (url != null) "\nSource / URL: $url" else ""}
+
+Full license text: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html"""
+    }
+
+    data class Lgpl3(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+    ) : License(elementLicensed, author, url) {
+        override val isCopyleft: Boolean get() = true
+
+        override val licenseText: String
+            get() = """GNU Lesser General Public License, Version 3 (LGPL-3.0)
+
+$elementLicensed by $author is licensed under the GNU Lesser General Public License, Version 3 (incorporating GPLv3 by reference with additional permissions). This is a weak-copyleft license: you may link against this library from software under other license terms, but modifications to the library itself must be released under the LGPL, and you must allow users to relink your application against a modified version of the library.${if (url != null) "\nSource / URL: $url" else ""}
+
+Full license text: https://www.gnu.org/licenses/lgpl-3.0.html"""
+    }
+
+    data class Mpl2(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+    ) : License(elementLicensed, author, url) {
+        override val isCopyleft: Boolean get() = true
+
+        override val licenseText: String
+            get() = """Mozilla Public License, Version 2.0 (MPL-2.0)
+
+$elementLicensed by $author is licensed under the Mozilla Public License, Version 2.0. This is a file-level weak-copyleft license: modifications to MPL-licensed source files must themselves be made available under the MPL, but the covered software may be combined with proprietary or differently-licensed code in a larger work without that larger work being placed under the MPL.${if (url != null) "\nSource / URL: $url" else ""}
+
+Full license text: https://www.mozilla.org/en-US/MPL/2.0/"""
+    }
+
+    data class Cc0(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+    ) : License(elementLicensed, author, url) {
+        override val licenseText: String
+            get() = """CC0 1.0 Universal (Public Domain Dedication)
+
+$elementLicensed by $author has been dedicated to the public domain under Creative Commons CC0 1.0 Universal. To the extent possible under law, all copyright and related or neighboring rights have been waived worldwide. You may copy, modify, distribute, and perform the work, even for commercial purposes, all without asking permission.${if (url != null) "\nSource / URL: $url" else ""}
+
+Full legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode"""
+    }
+
+    enum class CcVariant(
+        internal val slug: String,
+        internal val displayName: String,
+    ) {
+        BY("by", "Attribution"),
+        BY_SA("by-sa", "Attribution-ShareAlike"),
+        BY_ND("by-nd", "Attribution-NoDerivatives"),
+        BY_NC("by-nc", "Attribution-NonCommercial"),
+        BY_NC_SA("by-nc-sa", "Attribution-NonCommercial-ShareAlike"),
+        BY_NC_ND("by-nc-nd", "Attribution-NonCommercial-NoDerivatives"),
+    }
+
+    data class CreativeCommons(
+        val variant: CcVariant,
+        val version: String,
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+    ) : License(elementLicensed, author, url) {
+        override val licenseText: String
+            get() {
+                val conditions = mutableListOf("Attribution — You must give appropriate credit to $author, provide a link to the license, and indicate if changes were made.")
+
+                if (variant == CcVariant.BY_SA || variant == CcVariant.BY_NC_SA) {
+                    conditions += "ShareAlike — If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original."
+                }
+
+                if (variant == CcVariant.BY_ND || variant == CcVariant.BY_NC_ND) {
+                    conditions += "NoDerivatives — If you remix, transform, or build upon the material, you may not distribute the modified material."
+                }
+
+                if (variant == CcVariant.BY_NC || variant == CcVariant.BY_NC_SA || variant == CcVariant.BY_NC_ND) {
+                    conditions += "NonCommercial — You may not use the material for commercial purposes."
+                }
+
+                val permitsAdaptation = variant != CcVariant.BY_ND && variant != CcVariant.BY_NC_ND
+                val permissions =
+                    if (permitsAdaptation) {
+                        "- Share — copy and redistribute the material in any medium or format\n- Adapt — remix, transform, and build upon the material"
+                    } else {
+                        "- Share — copy and redistribute the material in any medium or format, unmodified and in whole"
+                    }
+
+                return """Creative Commons ${variant.displayName} $version (CC ${variant.name.replace('_', '-')} $version)
+
+$elementLicensed by $author is licensed under Creative Commons ${variant.displayName} $version.${if (url != null) "\nSource / URL: $url" else ""}
+
+Under this license, you are free to:
+$permissions
+
+Under the following terms:
+${conditions.joinToString("\n") { "- $it" }}
+
+Full legal code: https://creativecommons.org/licenses/${variant.slug}/$version/legalcode"""
+            }
+    }
 }

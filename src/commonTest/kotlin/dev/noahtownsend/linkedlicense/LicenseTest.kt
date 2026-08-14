@@ -1,5 +1,6 @@
 package dev.noahtownsend.linkedlicense
 
+import dev.noahtownsend.linkedlicense.License.CcVariant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -114,6 +115,136 @@ class LicenseTest {
         assertTrue(license.licenseText.isNotBlank())
         assertTrue(license.licenseText.contains("17 U.S.C"))
         assertFalse(license.isCopyleft)
+    }
+
+    @Test
+    fun `Gpl2 licenseText is non-blank and is copyleft`() {
+        val license = License.Gpl2(elementLicensed = "Foo", author = "Jane Doe")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("GNU General Public License"))
+        assertTrue(license.licenseText.contains("Version 2"))
+        assertTrue(license.licenseText.contains("gnu.org/licenses/old-licenses/gpl-2.0.html"))
+        assertTrue(license.isCopyleft)
+    }
+
+    @Test
+    fun `Gpl3 licenseText is non-blank and is copyleft`() {
+        val license = License.Gpl3(elementLicensed = "Foo", author = "Jane Doe")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("GNU General Public License"))
+        assertTrue(license.licenseText.contains("Version 3"))
+        assertTrue(license.licenseText.contains("gnu.org/licenses/gpl-3.0.html"))
+        assertTrue(license.isCopyleft)
+    }
+
+    @Test
+    fun `Lgpl2_1 licenseText is non-blank and is copyleft`() {
+        val license = License.Lgpl2_1(elementLicensed = "Foo", author = "Jane Doe")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("GNU Lesser General Public License"))
+        assertTrue(license.licenseText.contains("Version 2.1"))
+        assertTrue(license.licenseText.contains("gnu.org/licenses/old-licenses/lgpl-2.1.html"))
+        assertTrue(license.isCopyleft)
+    }
+
+    @Test
+    fun `Lgpl3 licenseText is non-blank and is copyleft`() {
+        val license = License.Lgpl3(elementLicensed = "Foo", author = "Jane Doe")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("GNU Lesser General Public License"))
+        assertTrue(license.licenseText.contains("Version 3"))
+        assertTrue(license.licenseText.contains("gnu.org/licenses/lgpl-3.0.html"))
+        assertTrue(license.isCopyleft)
+    }
+
+    @Test
+    fun `Mpl2 licenseText is non-blank and is copyleft`() {
+        val license = License.Mpl2(elementLicensed = "Foo", author = "Jane Doe")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("Mozilla Public License"))
+        assertTrue(license.licenseText.contains("2.0"))
+        assertTrue(license.isCopyleft)
+    }
+
+    @Test
+    fun `Cc0 licenseText is non-blank and not copyleft`() {
+        val license = License.Cc0(elementLicensed = "Foo", author = "Jane Doe")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("CC0"))
+        assertTrue(license.licenseText.contains("creativecommons.org/publicdomain/zero/1.0/legalcode"))
+        assertFalse(license.isCopyleft)
+    }
+
+    @Test
+    fun `CreativeCommons BY_SA licenseText contains ShareAlike condition and correct legalcode link`() {
+        val license =
+            License.CreativeCommons(
+                variant = CcVariant.BY_SA,
+                version = "4.0",
+                elementLicensed = "Wikimedia Commons Media",
+                author = "Wikimedia Contributors",
+            )
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("ShareAlike"))
+        assertTrue(license.licenseText.contains("Attribution"))
+        assertTrue(license.licenseText.contains("creativecommons.org/licenses/by-sa/4.0/legalcode"))
+        assertFalse(license.isCopyleft)
+    }
+
+    @Test
+    fun `CreativeCommons BY_ND licenseText contains NoDerivatives condition and no Adapt permission`() {
+        val license =
+            License.CreativeCommons(
+                variant = CcVariant.BY_ND,
+                version = "4.0",
+                elementLicensed = "Photo",
+                author = "Photographer",
+            )
+
+        assertTrue(license.licenseText.contains("NoDerivatives"))
+        assertFalse(license.licenseText.contains("Adapt"))
+    }
+
+    @Test
+    fun `exactly the copyleft family is classified as copyleft`() {
+        val allLicenses =
+            listOf(
+                License.MIT(elementLicensed = "e", author = "a", year = "2020"),
+                License.Apache1_1(elementLicensed = "e", author = "a"),
+                License.Apache2(elementLicensed = "e", author = "a"),
+                License.Bsd2Clause(elementLicensed = "e", author = "a", year = "2020"),
+                License.Bsd3Clause(elementLicensed = "e", author = "a", year = "2020"),
+                License.Isc(elementLicensed = "e", author = "a", year = "2020"),
+                License.Gpl2(elementLicensed = "e", author = "a"),
+                License.Gpl3(elementLicensed = "e", author = "a"),
+                License.Lgpl2_1(elementLicensed = "e", author = "a"),
+                License.Lgpl3(elementLicensed = "e", author = "a"),
+                License.Mpl2(elementLicensed = "e", author = "a"),
+                License.Unlicense(elementLicensed = "e", author = "a"),
+                License.PublicDomain(elementLicensed = "e", author = "a"),
+                License.UsGovernmentPublicDomain(elementLicensed = "e", author = "a"),
+                License.Cc0(elementLicensed = "e", author = "a"),
+                License.CreativeCommons(variant = CcVariant.BY, version = "4.0", elementLicensed = "e", author = "a"),
+                License.CreativeCommons(variant = CcVariant.BY_SA, version = "4.0", elementLicensed = "e", author = "a"),
+                License.CreativeCommons(variant = CcVariant.BY_ND, version = "4.0", elementLicensed = "e", author = "a"),
+                License.CreativeCommons(variant = CcVariant.BY_NC, version = "4.0", elementLicensed = "e", author = "a"),
+                License.CreativeCommons(variant = CcVariant.BY_NC_SA, version = "4.0", elementLicensed = "e", author = "a"),
+                License.CreativeCommons(variant = CcVariant.BY_NC_ND, version = "4.0", elementLicensed = "e", author = "a"),
+            )
+
+        val copyleftTypes = allLicenses.filter { it.isCopyleft }.map { it::class.simpleName }.toSet()
+
+        assertEquals(
+            setOf("Gpl2", "Gpl3", "Lgpl2_1", "Lgpl3", "Mpl2"),
+            copyleftTypes,
+        )
     }
 
     @Test
