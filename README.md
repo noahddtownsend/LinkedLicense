@@ -7,6 +7,9 @@ you — so you never have to hand-type another `NOTICE` entry.
 - **Targets**: Android, iOS (x64 / arm64 / simulator arm64), JVM, JS, Wasm.
 - **License (of this library's own code)**: MIT. See [`LICENSE`](./LICENSE).
 - **Group / artifact**: `dev.noahtownsend:linkedlicense`.
+- **Using Claude Code?** There's a packaged skill that walks through integrating
+  LinkedLicense into your project step by step:
+  [`.claude/skills/integrate-linkedlicense/SKILL.md`](./.claude/skills/integrate-linkedlicense/SKILL.md).
 
 ## Quickstart
 
