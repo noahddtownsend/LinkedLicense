@@ -14,11 +14,11 @@ plugins {
     // settings.gradle.kts's `pluginManagement` block for why, and the populate command. Not
     // self-referential the way applying this to `linkedlicense-plugin` itself would be: this
     // module doesn't build the plugin, it only consumes it.
-    id("dev.noahtownsend.linkedlicense") version "0.9.0"
+    id("dev.noahtownsend.linkedlicense") version "0.9.2"
 }
 
 group = "dev.noahtownsend"
-version = "0.9.0"
+version = "0.9.2"
 
 // See the root build script's `mavenPublishing` block for the credentials/signing notes -
 // identical convention applies here.

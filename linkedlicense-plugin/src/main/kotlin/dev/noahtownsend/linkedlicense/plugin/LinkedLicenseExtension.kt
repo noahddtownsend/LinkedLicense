@@ -55,4 +55,11 @@ open class LinkedLicenseExtension(
      * `[suppress-best-guess-warnings]` in `linkedlicense.toml`. Default: `false`.
      */
     var bestEffortLicenseFetch: Boolean = false
+
+    /**
+     * Automatically populates non-overridden fields (e.g. author, elementLicensed, url) from
+     * POM metadata or best-effort fallbacks when an override entry does not specify them.
+     * Default: `true`.
+     */
+    var autoPopulate: Boolean = true
 }

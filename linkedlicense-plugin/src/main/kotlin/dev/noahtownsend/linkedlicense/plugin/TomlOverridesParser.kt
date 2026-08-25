@@ -68,8 +68,24 @@ object TomlOverridesParser {
         val policyTable = result.getTable("license-policy")
         val licensePolicy =
             LicensePolicy(
-                allow = policyTable?.getArrayOrEmpty("allow")?.toList()?.map { it.toString() }?.toSet().orEmpty(),
-                block = policyTable?.getArrayOrEmpty("block")?.toList()?.map { it.toString() }?.toSet().orEmpty(),
+                allow =
+                    policyTable
+                        ?.getArrayOrEmpty("allow")
+                        ?.toList()
+                        ?.map { raw ->
+                            val s = raw.toString()
+                            BuiltInLicenses.bySimpleName(s)?.let { BuiltInLicenses.policyId(it) } ?: s
+                        }?.toSet()
+                        .orEmpty(),
+                block =
+                    policyTable
+                        ?.getArrayOrEmpty("block")
+                        ?.toList()
+                        ?.map { raw ->
+                            val s = raw.toString()
+                            BuiltInLicenses.bySimpleName(s)?.let { BuiltInLicenses.policyId(it) } ?: s
+                        }?.toSet()
+                        .orEmpty(),
             )
 
         val assetsTable = result.getTable("assets")
@@ -106,19 +122,21 @@ object TomlOverridesParser {
         table: TomlTable,
         file: File,
     ): OverrideSpec {
-        val licenseRef =
-            table.getString("license")
-                ?: throw GradleException("[overrides] entry '$rawKey' in ${file.path} is missing a 'license' key.")
+        val licenseRef = table.getString("license")
 
-        if (licenseRef.startsWith("custom:")) {
+        if (licenseRef != null && licenseRef.startsWith("custom:")) {
             return OverrideSpec.Custom(licenseRef.removePrefix("custom:"))
         }
 
         val kClass =
-            BuiltInLicenses.bySimpleName(licenseRef)
-                ?: throw GradleException(
-                    "[overrides] entry '$rawKey' in ${file.path} references unknown built-in license '$licenseRef'.",
-                )
+            if (licenseRef != null) {
+                BuiltInLicenses.bySimpleName(licenseRef)
+                    ?: throw GradleException(
+                        "[overrides] entry '$rawKey' in ${file.path} references unknown built-in license '$licenseRef'.",
+                    )
+            } else {
+                null
+            }
 
         return OverrideSpec.BuiltIn(
             kClass = kClass,
@@ -127,6 +145,7 @@ object TomlOverridesParser {
             url = table.getString("url"),
             text = table.getString("text"),
             licenseName = table.getString("licenseName"),
+            autoPopulate = table.getBoolean("autoPopulate"),
         )
     }
 }

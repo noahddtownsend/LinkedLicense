@@ -32,6 +32,35 @@ class LicenseTest {
     }
 
     @Test
+    fun `Mit0 licenseText contains year and author substitutions`() {
+        val license =
+            License.Mit0(
+                elementLicensed = "Sample",
+                author = "Jane Doe",
+                year = "2024",
+            )
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("2024"))
+        assertTrue(license.licenseText.contains("Jane Doe"))
+        assertTrue(license.licenseText.contains("MIT No Attribution"))
+    }
+
+    @Test
+    fun `Mit0 is not copyleft`() {
+        val license = License.Mit0(elementLicensed = "Sample", author = "Jane Doe", year = "2024")
+
+        assertFalse(license.isCopyleft)
+    }
+
+    @Test
+    fun `Mit0 shortName is MIT-0`() {
+        val license = License.Mit0(elementLicensed = "Sample", author = "Jane Doe", year = "2024")
+
+        assertEquals("MIT-0", license.shortName)
+    }
+
+    @Test
     fun `Apache1_1 licenseText is non-blank and contains license name`() {
         val license = License.Apache1_1(elementLicensed = "Foo", author = "Bar")
 
@@ -149,7 +178,7 @@ class LicenseTest {
     }
 
     @Test
-    fun `CopyrightExpired shortName is Public Domain (Expired)`() {
+    fun `CopyrightExpired shortName is Public Domain Expired`() {
         val license = License.CopyrightExpired(elementLicensed = "e", author = "a")
 
         assertEquals("Public Domain (Expired)", license.shortName)
@@ -210,6 +239,60 @@ class LicenseTest {
     }
 
     @Test
+    fun `Epl1 licenseText is non-blank and is copyleft`() {
+        val license = License.Epl1(elementLicensed = "Foo", author = "Jane Doe")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("Eclipse Public License"))
+        assertTrue(license.licenseText.contains("1.0"))
+        assertTrue(license.licenseText.contains("eclipse.org/legal/epl-v10.html"))
+        assertTrue(license.isCopyleft)
+    }
+
+    @Test
+    fun `Epl1 shortName is EPL-1_0`() {
+        val license = License.Epl1(elementLicensed = "Foo", author = "Jane Doe")
+
+        assertEquals("EPL-1.0", license.shortName)
+    }
+
+    @Test
+    fun `Agpl3 licenseText is non-blank and is strong copyleft`() {
+        val license = License.Agpl3(elementLicensed = "Foo", author = "Jane Doe")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("Affero"))
+        assertTrue(license.licenseText.contains("AGPL-3.0"))
+        assertTrue(license.isCopyleft)
+        assertEquals(License.CopyleftStrength.STRONG, license.copyleftStrength)
+        assertEquals("AGPL-3.0", license.shortName)
+    }
+
+    @Test
+    fun `Cddl1 licenseText is non-blank and is weak copyleft`() {
+        val license = License.Cddl1(elementLicensed = "Foo", author = "Jane Doe")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("Common Development and Distribution License"))
+        assertTrue(license.licenseText.contains("1.0"))
+        assertTrue(license.isCopyleft)
+        assertEquals(License.CopyleftStrength.WEAK, license.copyleftStrength)
+        assertEquals("CDDL-1.0", license.shortName)
+    }
+
+    @Test
+    fun `Cddl1_1 licenseText is non-blank and is weak copyleft`() {
+        val license = License.Cddl1_1(elementLicensed = "Foo", author = "Jane Doe")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("Common Development and Distribution License"))
+        assertTrue(license.licenseText.contains("1.1"))
+        assertTrue(license.isCopyleft)
+        assertEquals(License.CopyleftStrength.WEAK, license.copyleftStrength)
+        assertEquals("CDDL-1.1", license.shortName)
+    }
+
+    @Test
     fun `Cc0 licenseText is non-blank and not copyleft`() {
         val license = License.Cc0(elementLicensed = "Foo", author = "Jane Doe")
 
@@ -255,6 +338,7 @@ class LicenseTest {
         val allLicenses =
             listOf(
                 License.MIT(elementLicensed = "e", author = "a", year = "2020"),
+                License.Mit0(elementLicensed = "e", author = "a", year = "2020"),
                 License.Apache1_1(elementLicensed = "e", author = "a"),
                 License.Apache2(elementLicensed = "e", author = "a"),
                 License.Bsd2Clause(elementLicensed = "e", author = "a", year = "2020"),
@@ -262,9 +346,13 @@ class LicenseTest {
                 License.Isc(elementLicensed = "e", author = "a", year = "2020"),
                 License.Gpl2(elementLicensed = "e", author = "a"),
                 License.Gpl3(elementLicensed = "e", author = "a"),
+                License.Agpl3(elementLicensed = "e", author = "a"),
                 License.Lgpl2_1(elementLicensed = "e", author = "a"),
                 License.Lgpl3(elementLicensed = "e", author = "a"),
                 License.Mpl2(elementLicensed = "e", author = "a"),
+                License.Epl1(elementLicensed = "e", author = "a"),
+                License.Cddl1(elementLicensed = "e", author = "a"),
+                License.Cddl1_1(elementLicensed = "e", author = "a"),
                 License.Unlicense(elementLicensed = "e", author = "a"),
                 License.PublicDomain(elementLicensed = "e", author = "a"),
                 License.UsGovernmentPublicDomain(elementLicensed = "e", author = "a"),
@@ -285,23 +373,32 @@ class LicenseTest {
         val copyleftTypes = allLicenses.filter { it.isCopyleft }.map { it::class.simpleName }.toSet()
 
         assertEquals(
-            setOf("Gpl2", "Gpl3", "Lgpl2_1", "Lgpl3", "Mpl2"),
+            setOf("Gpl2", "Gpl3", "Agpl3", "Lgpl2_1", "Lgpl3", "Mpl2", "Epl1", "Cddl1", "Cddl1_1"),
             copyleftTypes,
         )
     }
 
     @Test
-    fun `copyleftStrength is STRONG for GPL, WEAK for LGPL and MPL, NONE otherwise`() {
-        val strongCopyleft = listOf(License.Gpl2(elementLicensed = "e", author = "a"), License.Gpl3(elementLicensed = "e", author = "a"))
+    fun `copyleftStrength is STRONG for GPL and AGPL and WEAK for LGPL and MPL and EPL and CDDL and NONE otherwise`() {
+        val strongCopyleft =
+            listOf(
+                License.Gpl2(elementLicensed = "e", author = "a"),
+                License.Gpl3(elementLicensed = "e", author = "a"),
+                License.Agpl3(elementLicensed = "e", author = "a"),
+            )
         val weakCopyleft =
             listOf(
                 License.Lgpl2_1(elementLicensed = "e", author = "a"),
                 License.Lgpl3(elementLicensed = "e", author = "a"),
                 License.Mpl2(elementLicensed = "e", author = "a"),
+                License.Epl1(elementLicensed = "e", author = "a"),
+                License.Cddl1(elementLicensed = "e", author = "a"),
+                License.Cddl1_1(elementLicensed = "e", author = "a"),
             )
         val noneCopyleft =
             listOf(
                 License.MIT(elementLicensed = "e", author = "a", year = "2020"),
+                License.Mit0(elementLicensed = "e", author = "a", year = "2020"),
                 License.Apache2(elementLicensed = "e", author = "a"),
                 License.Cc0(elementLicensed = "e", author = "a"),
                 License.Custom(elementLicensed = "e", author = "a", text = "t"),
@@ -407,6 +504,7 @@ class LicenseTest {
         val allLicenses =
             listOf(
                 License.MIT(elementLicensed = "e", author = "a", year = "2020"),
+                License.Mit0(elementLicensed = "e", author = "a", year = "2020"),
                 License.Apache1_1(elementLicensed = "e", author = "a"),
                 License.Apache2(elementLicensed = "e", author = "a"),
                 License.Bsd2Clause(elementLicensed = "e", author = "a", year = "2020"),
@@ -414,9 +512,13 @@ class LicenseTest {
                 License.Isc(elementLicensed = "e", author = "a", year = "2020"),
                 License.Gpl2(elementLicensed = "e", author = "a"),
                 License.Gpl3(elementLicensed = "e", author = "a"),
+                License.Agpl3(elementLicensed = "e", author = "a"),
                 License.Lgpl2_1(elementLicensed = "e", author = "a"),
                 License.Lgpl3(elementLicensed = "e", author = "a"),
                 License.Mpl2(elementLicensed = "e", author = "a"),
+                License.Epl1(elementLicensed = "e", author = "a"),
+                License.Cddl1(elementLicensed = "e", author = "a"),
+                License.Cddl1_1(elementLicensed = "e", author = "a"),
                 License.Unlicense(elementLicensed = "e", author = "a"),
                 License.PublicDomain(elementLicensed = "e", author = "a"),
                 License.UsGovernmentPublicDomain(elementLicensed = "e", author = "a"),

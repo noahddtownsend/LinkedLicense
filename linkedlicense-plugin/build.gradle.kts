@@ -23,7 +23,7 @@ plugins {
 // kotlin-gradle-plugin itself is `compileOnly` below, never shipped, so needs no entry.
 
 group = "dev.noahtownsend"
-version = "0.9.0"
+version = "0.9.2"
 
 kotlin {
     jvmToolchain(21)
@@ -120,6 +120,7 @@ dependencies {
     // KotlinMultiplatformExtension) without this dependency to compile against previously
     // threw NoClassDefFoundError/ClassCastException at apply time.
     compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:${libs.versions.kotlin.get()}")
+    compileOnly("com.android.tools.build:gradle:${libs.versions.agp.get()}")
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlin.test.junit5)

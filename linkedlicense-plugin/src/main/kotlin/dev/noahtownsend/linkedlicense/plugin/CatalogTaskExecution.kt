@@ -154,6 +154,7 @@ internal object CatalogTaskExecution {
                         )
                     }
                 },
+                autoPopulate = extension.autoPopulate,
             )
 
         if (result.unresolved.isNotEmpty()) {
@@ -231,7 +232,7 @@ internal object CatalogTaskExecution {
                 .withArtifacts(MavenModule::class.java, MavenPomArtifact::class.java)
                 .execute()
 
-        val byCoordinate = mutableMapOf<Coordinate, PomInfo>()
+        val parsedPoms = mutableMapOf<Coordinate, PomInfo>()
 
         result.resolvedComponents.forEach { component ->
             val id = component.id as? ModuleComponentIdentifier ?: return@forEach
@@ -243,10 +244,67 @@ internal object CatalogTaskExecution {
                     .firstOrNull()
                     ?.file
 
-            byCoordinate[coordinate] = if (pomFile != null) parsePomLicenses(pomFile) else PomInfo(emptyList(), null)
+            parsedPoms[coordinate] = if (pomFile != null) parsePomLicenses(pomFile) else PomInfo(licenses = emptyList(), organizationName = null)
         }
 
-        return byCoordinate
+        val parentPomCache = mutableMapOf<Coordinate, PomInfo>()
+
+        fun fetchParentPom(ref: ParentPomRef): PomInfo? {
+            val parentCoord = Coordinate(ref.groupId, ref.artifactId, ref.version)
+            parentPomCache[parentCoord]?.let { return it }
+
+            return runCatching {
+                val compId =
+                    org.gradle.internal.component.external.model.DefaultModuleComponentIdentifier.newId(
+                        org.gradle.api.internal.artifacts.DefaultModuleIdentifier.newId(ref.groupId, ref.artifactId),
+                        ref.version,
+                    )
+                val queryResult =
+                    project.dependencies
+                        .createArtifactResolutionQuery()
+                        .forComponents(compId)
+                        .withArtifacts(MavenModule::class.java, MavenPomArtifact::class.java)
+                        .execute()
+                val parentPomFile =
+                    queryResult.resolvedComponents.firstOrNull()
+                        ?.getArtifacts(MavenPomArtifact::class.java)
+                        ?.filterIsInstance<ResolvedArtifactResult>()
+                        ?.firstOrNull()
+                        ?.file
+
+                if (parentPomFile != null) {
+                    val info = parsePomLicenses(parentPomFile)
+                    parentPomCache[parentCoord] = info
+                    info
+                } else {
+                    null
+                }
+            }.getOrNull()
+        }
+
+        val finalPoms = mutableMapOf<Coordinate, PomInfo>()
+
+        parsedPoms.forEach { (coord, initialInfo) ->
+            var currentInfo = initialInfo
+            val visited = mutableSetOf(coord.toString())
+            var depth = 0
+            val maxDepth = 10
+
+            while (depth < maxDepth) {
+                val parentRef = currentInfo.parentRef ?: break
+                val parentKey = "${parentRef.groupId}:${parentRef.artifactId}:${parentRef.version}"
+                if (!visited.add(parentKey)) {
+                    break
+                }
+                val parentInfo = fetchParentPom(parentRef) ?: break
+                currentInfo = currentInfo.withParent(parentInfo)
+                depth++
+            }
+
+            finalPoms[coord] = currentInfo
+        }
+
+        return finalPoms
     }
 
     private fun writeThirdPartyNotices(

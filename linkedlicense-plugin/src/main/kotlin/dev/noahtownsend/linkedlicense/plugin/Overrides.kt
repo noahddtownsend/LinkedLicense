@@ -5,15 +5,17 @@ import kotlin.reflect.KClass
 
 /** What a single `[overrides]` entry in `linkedlicense.toml` resolves to. */
 sealed class OverrideSpec {
-    /** A built-in [License] subtype, e.g. `{ license = "Apache2" }`. */
+    /** A built-in [License] subtype (or field-level override with auto-matched license), e.g. `{ license = "Apache2" }` or `{ author = "Google" }`. */
     data class BuiltIn(
-        val kClass: KClass<out License>,
-        val elementLicensed: String?,
-        val author: String?,
-        val url: String?,
-        val text: String?,
+        val kClass: KClass<out License>? = null,
+        val elementLicensed: String? = null,
+        val author: String? = null,
+        val url: String? = null,
+        val text: String? = null,
         /** Optional [License.Custom.licenseName] override — ignored for any other built-in type. */
         val licenseName: String? = null,
+        /** Explicit auto-populate toggle; when null, defers to the global extension setting. */
+        val autoPopulate: Boolean? = null,
     ) : OverrideSpec()
 
     /** A `custom:fully.qualified.Symbol` reference — codegen emits an import + reference. */

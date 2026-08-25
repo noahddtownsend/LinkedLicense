@@ -536,18 +536,211 @@ class CatalogGeneratorTest {
     }
 
     @Test
-    fun `resolve() never invokes bestEffortFetch when a coordinate already matched normally`() {
-        var called = false
+    fun `resolve() uses organization name for author when present`() {
+        val coord = Coordinate("com.squareup.okhttp3", "okhttp", "4.12.0")
+        val info = PomInfo(
+            name = "OkHttp",
+            licenses = listOf(PomLicense("Apache-2.0", null)),
+            organizationName = "Square, Inc.",
+            developers = listOf(PomDeveloper("Square")),
+        )
 
-        CatalogGenerator.resolve(
-            coordinates = listOf(apacheCoord),
-            pomInfoOf = pomInfoFor(mapOf(apacheCoord to pomInfo("Apache-2.0").copy(scmUrl = "https://github.com/example/foo"))),
+        val result = CatalogGenerator.resolve(
+            coordinates = listOf(coord),
+            pomInfoOf = pomInfoFor(mapOf(coord to info)),
             overrides = OverridesConfig.EMPTY,
             failOnCopyleft = true,
             failOnUnknown = true,
-            bestEffortFetch = { _, _ -> called = true; License.MIT::class },
         )
 
-        assertTrue(!called)
+        val entry = result.entries.single().second as CatalogEntry.BuiltIn
+        assertTrue(entry.expression.contains("author = \"Square, Inc.\""), entry.expression)
+        assertTrue(entry.expression.contains("elementLicensed = \"OkHttp\""), entry.expression)
+    }
+
+    @Test
+    fun `resolve() uses developer name for author when organization name is absent`() {
+        val coord = Coordinate("org.example", "my-lib", "1.0")
+        val info = PomInfo(
+            name = null,
+            licenses = listOf(PomLicense("MIT", null)),
+            organizationName = null,
+            developers = listOf(PomDeveloper("Jane Developer")),
+        )
+
+        val result = CatalogGenerator.resolve(
+            coordinates = listOf(coord),
+            pomInfoOf = pomInfoFor(mapOf(coord to info)),
+            overrides = OverridesConfig.EMPTY,
+            failOnCopyleft = true,
+            failOnUnknown = true,
+        )
+
+        val entry = result.entries.single().second as CatalogEntry.BuiltIn
+        assertTrue(entry.expression.contains("author = \"Jane Developer\""), entry.expression)
+        assertTrue(entry.expression.contains("elementLicensed = \"my-lib\""), entry.expression)
+    }
+
+    @Test
+    fun `resolve() falls back to groupId for author and artifactId for elementLicensed when metadata is absent`() {
+        val coord = Coordinate("org.example", "my-lib", "1.0")
+        val info = PomInfo(
+            name = null,
+            licenses = listOf(PomLicense("MIT", null)),
+            organizationName = null,
+            developers = emptyList(),
+        )
+
+        val result = CatalogGenerator.resolve(
+            coordinates = listOf(coord),
+            pomInfoOf = pomInfoFor(mapOf(coord to info)),
+            overrides = OverridesConfig.EMPTY,
+            failOnCopyleft = true,
+            failOnUnknown = true,
+        )
+
+        val entry = result.entries.single().second as CatalogEntry.BuiltIn
+        assertTrue(entry.expression.contains("author = \"org.example\""), entry.expression)
+        assertTrue(entry.expression.contains("elementLicensed = \"my-lib\""), entry.expression)
+    }
+
+    @Test
+    fun `withParent merges licenses, organizationName, developers, and scmUrl from parent when child is empty`() {
+        val parent = PomInfo(
+            name = "Parent Project",
+            licenses = listOf(PomLicense("Apache-2.0", "https://apache.org/license")),
+            organizationName = "Parent Org",
+            developers = listOf(PomDeveloper("Parent Dev")),
+            scmUrl = "https://github.com/parent/repo",
+            parentRef = null,
+        )
+        val child = PomInfo(
+            name = "Child Library",
+            licenses = emptyList(),
+            organizationName = null,
+            developers = emptyList(),
+            scmUrl = null,
+            parentRef = ParentPomRef("com.example", "parent", "1.0"),
+        )
+
+        val merged = child.withParent(parent)
+
+        assertEquals("Child Library", merged.name)
+        assertEquals(listOf(PomLicense("Apache-2.0", "https://apache.org/license")), merged.licenses)
+        assertEquals("Parent Org", merged.organizationName)
+        assertEquals(listOf(PomDeveloper("Parent Dev")), merged.developers)
+        assertEquals("https://github.com/parent/repo", merged.scmUrl)
+        assertEquals("Parent Org", merged.resolveAuthor("com.example"))
+        assertEquals("Child Library", merged.resolveElementLicensed("child"))
+    }
+
+    @Test
+    fun `resolve() allows overriding only author while auto-matching license and populating other fields`() {
+        val coord = Coordinate("com.squareup.okhttp3", "okhttp", "4.12.0")
+        val info = PomInfo(
+            name = "OkHttp Client",
+            licenses = listOf(PomLicense("Apache-2.0", "https://square.github.io/okhttp/")),
+            organizationName = "Square",
+        )
+        val overrides = OverridesConfig(
+            overrides = mapOf(coord.moduleId to OverrideSpec.BuiltIn(author = "Square, Inc.")),
+        )
+
+        val result = CatalogGenerator.resolve(
+            coordinates = listOf(coord),
+            pomInfoOf = pomInfoFor(mapOf(coord to info)),
+            overrides = overrides,
+            failOnCopyleft = true,
+            failOnUnknown = true,
+        )
+
+        assertEquals(1, result.entries.size)
+        val entry = result.entries.single().second as CatalogEntry.BuiltIn
+        assertTrue(entry.expression.contains("License.Apache2("), entry.expression)
+        assertTrue(entry.expression.contains("author = \"Square, Inc.\""), entry.expression)
+        assertTrue(entry.expression.contains("elementLicensed = \"OkHttp Client\""), entry.expression)
+        assertTrue(entry.expression.contains("url = \"https://square.github.io/okhttp/\""), entry.expression)
+    }
+
+    @Test
+    fun `resolve() auto-populates url and elementLicensed when only license is overridden`() {
+        val coord = Coordinate("com.example", "foo", "1.0")
+        val info = PomInfo(
+            name = "Foo Project",
+            licenses = listOf(PomLicense("Unrecognized", "https://example.com/foo")),
+            organizationName = "Example Org",
+        )
+        val overrides = OverridesConfig(
+            overrides = mapOf(coord.moduleId to OverrideSpec.BuiltIn(kClass = License.MIT::class)),
+        )
+
+        val result = CatalogGenerator.resolve(
+            coordinates = listOf(coord),
+            pomInfoOf = pomInfoFor(mapOf(coord to info)),
+            overrides = overrides,
+            failOnCopyleft = true,
+            failOnUnknown = true,
+        )
+
+        val entry = result.entries.single().second as CatalogEntry.BuiltIn
+        assertTrue(entry.expression.contains("License.MIT("), entry.expression)
+        assertTrue(entry.expression.contains("author = \"Example Org\""), entry.expression)
+        assertTrue(entry.expression.contains("elementLicensed = \"Foo Project\""), entry.expression)
+        assertTrue(entry.expression.contains("url = \"https://example.com/foo\""), entry.expression)
+    }
+
+    @Test
+    fun `resolve() respects autoPopulate = false on override entry by not pulling POM metadata`() {
+        val coord = Coordinate("com.example", "foo", "1.0")
+        val info = PomInfo(
+            name = "Foo Project",
+            licenses = listOf(PomLicense("MIT", "https://example.com/foo")),
+            organizationName = "Example Org",
+        )
+        val overrides = OverridesConfig(
+            overrides = mapOf(
+                coord.moduleId to OverrideSpec.BuiltIn(
+                    kClass = License.MIT::class,
+                    autoPopulate = false,
+                ),
+            ),
+        )
+
+        val result = CatalogGenerator.resolve(
+            coordinates = listOf(coord),
+            pomInfoOf = pomInfoFor(mapOf(coord to info)),
+            overrides = overrides,
+            failOnCopyleft = true,
+            failOnUnknown = true,
+        )
+
+        val entry = result.entries.single().second as CatalogEntry.BuiltIn
+        assertTrue(entry.expression.contains("author = \"com.example\""), entry.expression)
+        assertTrue(entry.expression.contains("elementLicensed = \"foo\""), entry.expression)
+        assertTrue(!entry.expression.contains("url ="), entry.expression)
+    }
+
+    @Test
+    fun `resolve() respects global autoPopulate = false`() {
+        val coord = Coordinate("com.example", "foo", "1.0")
+        val info = PomInfo(
+            name = "Foo Project",
+            licenses = listOf(PomLicense("MIT", "https://example.com/foo")),
+            organizationName = "Example Org",
+        )
+
+        val result = CatalogGenerator.resolve(
+            coordinates = listOf(coord),
+            pomInfoOf = pomInfoFor(mapOf(coord to info)),
+            overrides = OverridesConfig.EMPTY,
+            failOnCopyleft = true,
+            failOnUnknown = true,
+            autoPopulate = false,
+        )
+
+        val entry = result.entries.single().second as CatalogEntry.BuiltIn
+        assertTrue(entry.expression.contains("author = \"com.example\""), entry.expression)
+        assertTrue(entry.expression.contains("elementLicensed = \"foo\""), entry.expression)
+        assertTrue(!entry.expression.contains("url ="), entry.expression)
     }
 }

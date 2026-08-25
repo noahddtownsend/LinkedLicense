@@ -6,19 +6,7 @@ import java.io.File
 
 /**
  * A disposable Gradle project applying the plugin under test plus a Kotlin Gradle plugin
- * (`org.jetbrains.kotlin.jvm` or `.multiplatform`), wired against a [MavenFixtureRepo].
- *
- * Plain-JVM fixtures ([writeSettings]/[writeBuildFile]) inject the plugin under test via
- * `GradleRunner.withPluginClasspath()` and run with [run]/[runAndFail]. Multiplatform fixtures
- * ([writeSettingsForPublishedPlugin]/[writeMultiplatformBuildFile]) instead resolve it from a
- * local Maven repo and run with [runPublished]/[runPublishedAndFail] - see
- * [writeMultiplatformBuildFile]'s doc for why the two need different injection mechanisms.
- *
- * Functional tests here run only `generate*LicenseCatalog` tasks (not `build`) and assert on
- * their outcome / the generated source text - they don't compile the generated
- * `GeneratedLicenses.kt` against the real `dev.noahtownsend:linkedlicense` artifact, since
- * that library isn't published anywhere a fixture build could resolve it from. Simplification
- * flagged in the report.
+ * (`org.jetbrains.kotlin.jvm`, `.multiplatform`, or `.android`), wired against a [MavenFixtureRepo].
  */
 class FixtureProject(
     val projectDir: File,
@@ -49,6 +37,7 @@ class FixtureProject(
             |
             |pluginManagement {
             |    repositories {
+            |        google()
             |        gradlePluginPortal()
             |        mavenCentral()
             |    }
@@ -77,6 +66,7 @@ class FixtureProject(
             |pluginManagement {
             |    repositories {
             |        maven { url = uri("$repoDir") }
+            |        google()
             |        gradlePluginPortal()
             |        mavenCentral()
             |    }
@@ -85,10 +75,15 @@ class FixtureProject(
         )
     }
 
+    fun writeLocalProperties(sdkDir: String = "/Users/noahtownsend/Library/Android/sdk") {
+        File(projectDir, "local.properties").writeText("sdk.dir=$sdkDir\n")
+    }
+
     fun writeBuildFile(
         dependencyCoordinates: List<String>,
         linkedLicenseBlock: String = "",
     ) {
+        val functionalTestRepoDir = System.getProperty("linkedlicense.functionalTestRepo")
         File(projectDir, "build.gradle.kts").writeText(
             """
             |import java.net.URI
@@ -100,6 +95,7 @@ class FixtureProject(
             |
             |repositories {
             |    maven { url = URI.create("${repo.dir.toURI()}") }
+            ${if (functionalTestRepoDir != null) "|    maven { url = URI.create(\"${File(functionalTestRepoDir).toURI()}\") }" else ""}
             |    mavenCentral()
             |}
             |
@@ -112,22 +108,79 @@ class FixtureProject(
         )
     }
 
+    fun writeAndroidBuildFile(
+        dependencyCoordinates: List<String> = emptyList(),
+        productFlavors: List<String> = emptyList(),
+        linkedLicenseBlock: String = "",
+        isLibrary: Boolean = false,
+    ) {
+        val functionalTestRepoDir = System.getProperty("linkedlicense.functionalTestRepo")
+        val androidPlugin = if (isLibrary) "com.android.library" else "com.android.application"
+
+        val flavorsBlock =
+            if (productFlavors.isNotEmpty()) {
+                """
+                |    flavorDimensions += "env"
+                |    productFlavors {
+                ${productFlavors.joinToString("\n") { "|        create(\"$it\") { dimension = \"env\" }" }}
+                |    }
+                """.trimMargin()
+            } else {
+                ""
+            }
+
+        File(projectDir, "build.gradle.kts").writeText(
+            """
+            |import java.net.URI
+            |
+            |plugins {
+            |    id("$androidPlugin") version "8.13.2"
+            |    id("org.jetbrains.kotlin.android") version "2.3.21"
+            |    id("dev.noahtownsend.linkedlicense")
+            |}
+            |
+            |repositories {
+            |    google()
+            |    maven { url = URI.create("${repo.dir.toURI()}") }
+            ${if (functionalTestRepoDir != null) "|    maven { url = URI.create(\"${File(functionalTestRepoDir).toURI()}\") }" else ""}
+            |    mavenCentral()
+            |}
+            |
+            |android {
+            |    namespace = "com.example.app"
+            |    compileSdk = 34
+            |
+            |    defaultConfig {
+            |        minSdk = 24
+            |    }
+            $flavorsBlock
+            |}
+            |
+            |dependencies {
+            ${dependencyCoordinates.joinToString("\n") { "|    implementation(\"$it\")" }}
+            |}
+            |
+            $linkedLicenseBlock
+            """.trimMargin(),
+        )
+    }
+
+    fun writeUnrecognizedPluginBuildFile() {
+        File(projectDir, "build.gradle.kts").writeText(
+            """
+            |plugins {
+            |    id("base")
+            |    id("dev.noahtownsend.linkedlicense")
+            |}
+            """.trimMargin(),
+        )
+    }
+
     /**
      * A Kotlin Multiplatform equivalent of [writeBuildFile]: declares a `jvm()` target and,
      * optionally, one other platform target (e.g. `iosX64()`), each with its own dependency
      * set, so functional tests can assert per-target catalogs differ and `commonMain`'s is
-     * their union. [otherTargetDsl]/[otherTargetSourceSetName] are both null to declare only
-     * the `jvm()` target - e.g. for a fixture that needs to run a real Kotlin *compile* task
-     * (not just the `generate*LicenseCatalog` tasks), where a second, native target would
-     * require downloading the Kotlin/Native toolchain.
-     *
-     * Requires [writeSettingsForPublishedPlugin], not [writeSettings]: applying
-     * `kotlin("multiplatform")` alongside a plugin injected via
-     * `GradleRunner.withPluginClasspath()` (as [writeBuildFile]'s plain-JVM fixtures do) doesn't
-     * exercise the same runtime classloader sharing a real consumer gets from resolving both
-     * plugins together through the normal `plugins {}` DSL, so it throws NoClassDefFoundError
-     * even though the underlying compileOnly fix (`linkedlicense-plugin/build.gradle.kts`)
-     * genuinely works - confirmed separately via a real `includeBuild` consumer project.
+     * their union.
      */
     fun writeMultiplatformBuildFile(
         otherTargetDsl: String? = null,
@@ -138,12 +191,6 @@ class FixtureProject(
         linkedLicenseBlock: String = "",
     ) {
         val pluginVersion = System.getProperty("linkedlicense.version") ?: "0.1.0"
-
-        // Only needed when a fixture wants to resolve the real `dev.noahtownsend:linkedlicense`
-        // artifact as an ordinary dependency (e.g. to actually *compile* the generated
-        // `GeneratedLicenses.kt` against it) - see MultiplatformCompilationFunctionalTest. The
-        // property is always set by the `functionalTest` Gradle task (linkedlicense-plugin's
-        // build script), so this is safe to read unconditionally.
         val functionalTestRepoDir = System.getProperty("linkedlicense.functionalTestRepo")
 
         val otherTargetBlock =

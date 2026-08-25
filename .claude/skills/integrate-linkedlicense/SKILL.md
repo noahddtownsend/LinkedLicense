@@ -12,7 +12,7 @@ project's files, not this one, unless the user is explicitly working on LinkedLi
 itself.
 
 Current published version: check `build.gradle.kts` in this repo (`version = "..."`) for
-the latest — as of writing it's `0.9.0`. Prefer asking the user which version to pin, or
+the latest — as of writing it's `0.9.2`. Prefer asking the user which version to pin, or
 using the newest tag/release if you can check Maven Central, rather than guessing.
 
 ## Step 1 — Establish scope with the user
@@ -26,7 +26,7 @@ Ask (or infer from the target repo) two things before writing any Gradle:
    to both unless told otherwise.
 2. **Is there a licenses UI need?** If the target has a Compose Multiplatform UI and wants
    a ready-made "Licenses" screen, also add `dev.noahtownsend:linkedlicense-compose`
-   (§Step 5 below).
+   (§Step 6 below).
 
 ## Step 2 — Add the runtime dependency
 
@@ -50,23 +50,23 @@ plugins {
 ```
 
 This registers one `generateLicenseCatalog` task per Kotlin source set (e.g.
-`generateJvmMainLicenseCatalog`, `generateCommonMainLicenseCatalog`). Nothing else is
-required to get a first run — running the task (or a normal build) will:
+`generateJvmMainLicenseCatalog`, `generateCommonMainLicenseCatalog`, `generateDebugLicenseCatalog`).
+Nothing else is required to get a first run — running the task (or a normal build) will:
 
 - Auto-create `linkedlicense.toml` at the project root if it doesn't exist, fully
   scaffolded with commented examples for every table.
 - Resolve each source set's transitive classpath, dedupe by coordinate, match each
-  dependency's license via its POM (plus npm/CocoaPods/SPM metadata where relevant — see
-  README §2.3), and generate `GeneratedLicenses.kt` under
-  `build/generated/linkedlicense/<sourceSet>/`.
+  dependency's license via its POM (recursively resolving parent POMs for inherited licenses
+  and metadata, plus npm/CocoaPods/SPM metadata where relevant — see README §2.3), and
+  generate `GeneratedLicenses.kt` under `build/generated/linkedlicense/<sourceSet>/`.
 - **Fail the build by default** on any dependency it can't match (`failOnUnknown = true`)
   or that resolves to a copyleft license (`failOnCopyleft = true`). This is expected on
   first run for most real projects — go to Step 4.
 
 Only configure the `linkedLicense { }` extension block if the defaults need changing
 (README §3 has the full option list: `overridesFile`, `copyRequiredNotices`,
-`failOnCopyleft`, `failOnSoftCopyleft`, `failOnUnknown`, `bestEffortLicenseFetch`). Don't
-add it speculatively.
+`failOnCopyleft`, `failOnSoftCopyleft`, `failOnUnknown`, `bestEffortLicenseFetch`, `autoPopulate`).
+Don't add it speculatively.
 
 ## Step 4 — First build: run the task and resolve failures
 
@@ -76,10 +76,18 @@ output — it aggregates *every* offending coordinate in one pass, not one per r
 For each offending coordinate, in the generated/target `linkedlicense.toml`:
 
 - **Unknown/unmatched license** → add an `[overrides]` entry pinning the correct built-in
-  `License` type (or `custom:fully.qualified.Symbol` for a project-specific subclass — see
+  `License` type (e.g. `license = "Apache2"`, `"MIT"`, `"Mit0"`, `"Bsd3Clause"`, `"Epl1"`, `"Cddl1"`, `"Cddl1_1"`, `"Agpl3"`, etc., or `custom:fully.qualified.Symbol` for a project-specific subclass — see
   README §4), *or* an `[ignored]` entry with a reason string if it genuinely shouldn't
   ship in the catalog (e.g. a build-time-only or vendored/internal dependency).
-- **Copyleft license (GPL/LGPL/MPL)** → this is a real legal-risk signal, not just
+- **Field-specific overrides (author, element name, url)** → you can override specific metadata
+  without overriding the license type:
+  ```toml
+  [overrides]
+  "com.squareup.okhttp3:okhttp" = { author = "Square, Inc." }
+  ```
+  Non-overridden fields are automatically populated from the POM (or best-effort fetch). To disable
+  auto-population for an entry, set `autoPopulate = false`.
+- **Copyleft license (GPL/AGPL/LGPL/MPL/EPL/CDDL)** → this is a real legal-risk signal, not just
   friction. Do not blanket-disable the guard without the user's explicit sign-off. Prefer
   a scoped `[copyleft-allowed]` entry with a genuine reason (e.g. "build-time only, never
   linked into shipped artifact"). Only set `failOnCopyleft = false` /

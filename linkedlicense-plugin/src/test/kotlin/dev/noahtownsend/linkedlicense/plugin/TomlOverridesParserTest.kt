@@ -89,6 +89,37 @@ class TomlOverridesParserTest {
     }
 
     @Test
+    fun `parse() reads an override entry with only author and no license key`() {
+        val config =
+            parse(
+                """
+                [overrides]
+                "com.squareup.okhttp3:okhttp" = { author = "Square, Inc." }
+                """.trimIndent(),
+            )
+
+        val entry = config.overrides.getValue("com.squareup.okhttp3:okhttp") as OverrideSpec.BuiltIn
+        assertEquals(null, entry.kClass)
+        assertEquals("Square, Inc.", entry.author)
+        assertEquals(null, entry.autoPopulate)
+    }
+
+    @Test
+    fun `parse() reads an override entry with autoPopulate boolean`() {
+        val config =
+            parse(
+                """
+                [overrides]
+                "com.example:foo" = { license = "MIT", autoPopulate = false }
+                """.trimIndent(),
+            )
+
+        val entry = config.overrides.getValue("com.example:foo") as OverrideSpec.BuiltIn
+        assertEquals(License.MIT::class, entry.kClass)
+        assertEquals(false, entry.autoPopulate)
+    }
+
+    @Test
     fun `parse() resolves libs-dot-alias override keys via the alias resolver`() {
         val config =
             parse(

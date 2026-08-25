@@ -76,6 +76,10 @@ object LicenseTextMatcher {
 
     private val markers: List<Pair<KClass<out License>, List<String>>> =
         listOf(
+            License.Mit0::class to
+                listOf(
+                    "mit no attribution",
+                ),
             License.MIT::class to
                 listOf(
                     "permission is hereby granted, free of charge, to any person obtaining a copy",
@@ -106,6 +110,11 @@ object LicenseTextMatcher {
                     "permission to use, copy, modify, and/or distribute this software for any",
                     "purpose with or without fee is hereby granted",
                 ),
+            License.Agpl3::class to
+                listOf(
+                    "gnu affero general public license",
+                    "version 3, 19 november 2007",
+                ),
             License.Gpl3::class to
                 listOf(
                     "gnu general public license",
@@ -129,6 +138,20 @@ object LicenseTextMatcher {
             License.Mpl2::class to
                 listOf(
                     "mozilla public license, v. 2.0",
+                ),
+            License.Epl1::class to
+                listOf(
+                    "eclipse public license",
+                    "the accompanying program is provided under the terms of this eclipse public license",
+                ),
+            License.Cddl1_1::class to
+                listOf(
+                    "common development and distribution license",
+                    "version 1.1",
+                ),
+            License.Cddl1::class to
+                listOf(
+                    "common development and distribution license",
                 ),
             License.Unlicense::class to
                 listOf(

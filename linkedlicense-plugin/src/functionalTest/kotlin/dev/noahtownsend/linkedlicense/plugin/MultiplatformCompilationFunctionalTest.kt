@@ -49,9 +49,7 @@ class MultiplatformCompilationFunctionalTest {
                     // Coordinates: root project's Gradle Module Metadata "available-at" pointer
                     // resolves the real `jvm` variant for this fixture's jvm() target - see
                     // linkedlicense-plugin/build.gradle.kts's comment on functionalTestRepo.
-                    // Artifact id is "LinkedLicense" (the root project's name), not the
-                    // lowercase "linkedlicense" used in README examples/import statements.
-                    "dev.noahtownsend:LinkedLicense:$pluginVersion",
+                    "dev.noahtownsend:linkedlicense:$pluginVersion",
                 ),
             jvmDependencyCoordinates = listOf("com.example:jvm-lib:1.0"),
         )

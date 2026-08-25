@@ -23,13 +23,34 @@ class MavenFixtureRepo(
         group: String,
         artifact: String,
         version: String,
+        projectName: String? = null,
+        parentGroup: String? = null,
+        parentArtifact: String? = null,
+        parentVersion: String? = null,
         licenseName: String? = null,
         licenseUrl: String? = null,
         organizationName: String? = null,
+        developerName: String? = null,
         dependencies: List<Dep> = emptyList(),
         noticeText: String? = null,
+        packaging: String = "jar",
     ) {
         val moduleDir = File(dir, "${group.replace('.', '/')}/$artifact/$version").apply { mkdirs() }
+
+        val parentXml =
+            if (parentGroup != null && parentArtifact != null && parentVersion != null) {
+                """
+                |  <parent>
+                |    <groupId>$parentGroup</groupId>
+                |    <artifactId>$parentArtifact</artifactId>
+                |    <version>$parentVersion</version>
+                |  </parent>
+                """.trimMargin()
+            } else {
+                ""
+            }
+
+        val nameXml = if (projectName != null) "  <name>$projectName</name>" else ""
 
         val licensesXml =
             if (licenseName != null) {
@@ -48,6 +69,19 @@ class MavenFixtureRepo(
         val organizationXml =
             if (organizationName != null) {
                 "  <organization><name>$organizationName</name></organization>"
+            } else {
+                ""
+            }
+
+        val developersXml =
+            if (developerName != null) {
+                """
+                |  <developers>
+                |    <developer>
+                |      <name>$developerName</name>
+                |    </developer>
+                |  </developers>
+                """.trimMargin()
             } else {
                 ""
             }
@@ -71,27 +105,32 @@ class MavenFixtureRepo(
             |<?xml version="1.0" encoding="UTF-8"?>
             |<project xmlns="http://maven.apache.org/POM/4.0.0">
             |  <modelVersion>4.0.0</modelVersion>
+            $parentXml
             |  <groupId>$group</groupId>
             |  <artifactId>$artifact</artifactId>
             |  <version>$version</version>
-            |  <packaging>jar</packaging>
+            |  <packaging>$packaging</packaging>
+            $nameXml
             $organizationXml
+            $developersXml
             $licensesXml
             $dependenciesXml
             |</project>
             """.trimMargin(),
         )
 
-        File(moduleDir, "$artifact-$version.jar").outputStream().use { fileOut ->
-            ZipOutputStream(fileOut).use { zip ->
-                zip.putNextEntry(ZipEntry("META-INF/MANIFEST.MF"))
-                zip.write("Manifest-Version: 1.0\n".toByteArray())
-                zip.closeEntry()
-
-                if (noticeText != null) {
-                    zip.putNextEntry(ZipEntry("NOTICE"))
-                    zip.write(noticeText.toByteArray())
+        if (packaging != "pom") {
+            File(moduleDir, "$artifact-$version.jar").outputStream().use { fileOut ->
+                ZipOutputStream(fileOut).use { zip ->
+                    zip.putNextEntry(ZipEntry("META-INF/MANIFEST.MF"))
+                    zip.write("Manifest-Version: 1.0\n".toByteArray())
                     zip.closeEntry()
+
+                    if (noticeText != null) {
+                        zip.putNextEntry(ZipEntry("NOTICE"))
+                        zip.write(noticeText.toByteArray())
+                        zip.closeEntry()
+                    }
                 }
             }
         }

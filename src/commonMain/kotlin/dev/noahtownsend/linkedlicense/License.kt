@@ -84,6 +84,36 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
     }
 
+    data class Mit0(
+        override val elementLicensed: String,
+        override val author: String,
+        val year: String,
+        override val url: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val shortName: String get() = "MIT-0"
+
+        override val licenseText: String
+            get() = """MIT No Attribution
+
+Copyright $year $author
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE."""
+    }
+
     data class Apache1_1(
         override val elementLicensed: String,
         override val author: String,
@@ -581,6 +611,24 @@ $elementLicensed by $author is licensed under the GNU General Public License, Ve
 Full license text: https://www.gnu.org/licenses/gpl-3.0.html"""
     }
 
+    data class Agpl3(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val copyleftStrength get() = CopyleftStrength.STRONG
+
+        override val shortName: String get() = "AGPL-3.0"
+
+        override val licenseText: String
+            get() = """GNU Affero General Public License, Version 3 (AGPL-3.0)
+
+$elementLicensed by $author is licensed under the GNU Affero General Public License, Version 3. This is a strong-copyleft license with network-interaction obligations: any work derived from or incorporating this software must be distributed under the AGPLv3, and if the software is modified and run over a network, its complete corresponding source code must be made available to network users.${if (url != null) "\nSource / URL: $url" else ""}
+
+Full license text: https://www.gnu.org/licenses/agpl-3.0.html"""
+    }
+
     data class Lgpl2_1(
         override val elementLicensed: String,
         override val author: String,
@@ -633,6 +681,60 @@ Full license text: https://www.gnu.org/licenses/lgpl-3.0.html"""
 $elementLicensed by $author is licensed under the Mozilla Public License, Version 2.0. This is a file-level weak-copyleft license: modifications to MPL-licensed source files must themselves be made available under the MPL, but the covered software may be combined with proprietary or differently-licensed code in a larger work without that larger work being placed under the MPL.${if (url != null) "\nSource / URL: $url" else ""}
 
 Full license text: https://www.mozilla.org/en-US/MPL/2.0/"""
+    }
+
+    data class Epl1(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val copyleftStrength get() = CopyleftStrength.WEAK
+
+        override val shortName: String get() = "EPL-1.0"
+
+        override val licenseText: String
+            get() = """Eclipse Public License, Version 1.0 (EPL-1.0)
+
+$elementLicensed by $author is licensed under the Eclipse Public License, Version 1.0. This is a weak-copyleft license: modifications to EPL-licensed source code must be made available under the EPL, but you may combine the program with other software (including proprietary software) into a larger work without placing the larger work under the EPL.${if (url != null) "\nSource / URL: $url" else ""}
+
+Full license text: https://www.eclipse.org/legal/epl-v10.html"""
+    }
+
+    data class Cddl1(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val copyleftStrength get() = CopyleftStrength.WEAK
+
+        override val shortName: String get() = "CDDL-1.0"
+
+        override val licenseText: String
+            get() = """Common Development and Distribution License, Version 1.0 (CDDL-1.0)
+
+$elementLicensed by $author is licensed under the Common Development and Distribution License, Version 1.0. This is a weak-copyleft license: modifications to CDDL-licensed source files must be made available under the CDDL, but you may combine CDDL-licensed software with other software in a larger work without placing the larger work under the CDDL.${if (url != null) "\nSource / URL: $url" else ""}
+
+Full license text: https://opensource.org/licenses/CDDL-1.0"""
+    }
+
+    data class Cddl1_1(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val copyleftStrength get() = CopyleftStrength.WEAK
+
+        override val shortName: String get() = "CDDL-1.1"
+
+        override val licenseText: String
+            get() = """Common Development and Distribution License, Version 1.1 (CDDL-1.1)
+
+$elementLicensed by $author is licensed under the Common Development and Distribution License, Version 1.1. This is a weak-copyleft license: modifications to CDDL-licensed source files must be made available under the CDDL, but you may combine CDDL-licensed software with other software in a larger work without placing the larger work under the CDDL.${if (url != null) "\nSource / URL: $url" else ""}
+
+Full license text: https://spdx.org/licenses/CDDL-1.1.html"""
     }
 
     data class Cc0(

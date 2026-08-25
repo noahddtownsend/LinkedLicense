@@ -113,6 +113,7 @@ alongside scanned dependencies without hand-merging two lists yourself.
 | Type | Constructor params (beyond `elementLicensed`/`author`/`url`) | `copyleftStrength` |
 |---|---|---|
 | `License.MIT` | `year: String` | `NONE` |
+| `License.Mit0` | `year: String` | `NONE` |
 | `License.Apache1_1` | — | `NONE` |
 | `License.Apache2` | — | `NONE` |
 | `License.Bsd2Clause` | `year: String` | `NONE` |
@@ -120,9 +121,13 @@ alongside scanned dependencies without hand-merging two lists yourself.
 | `License.Isc` | `year: String` | `NONE` |
 | `License.Gpl2` | — | `STRONG` |
 | `License.Gpl3` | — | `STRONG` |
+| `License.Agpl3` | — | `STRONG` |
 | `License.Lgpl2_1` | — | `WEAK` |
 | `License.Lgpl3` | — | `WEAK` |
 | `License.Mpl2` | — | `WEAK` |
+| `License.Epl1` | — | `WEAK` |
+| `License.Cddl1` | — | `WEAK` |
+| `License.Cddl1_1` | — | `WEAK` |
 | `License.Ofl` | — | `NONE` |
 | `License.Unlicense` | — | `NONE` |
 | `License.Cc0` | — | `NONE` |
@@ -160,8 +165,8 @@ plus-50-or-70-years, but not universally), so `CopyrightExpired` takes an option
 if you're asserting the work is public domain more broadly (e.g. clearly pre-1900 with no
 plausible live copyright anywhere).
 
-`copyleftStrength` is non-`NONE` for `Gpl2`/`Gpl3` (`STRONG`) and `Lgpl2_1`/`Lgpl3`/`Mpl2`
-(`WEAK`) — anything with reciprocal/share-alike source-disclosure obligations. LGPL and MPL
+`copyleftStrength` is non-`NONE` for `Gpl2`/`Gpl3` (`STRONG`) and `Lgpl2_1`/`Lgpl3`/`Mpl2`/`Epl1`
+(`WEAK`) — anything with reciprocal/share-alike source-disclosure obligations. LGPL, MPL, and EPL
 are *weak* copyleft (obligations apply per-file/per-library, not to your whole program)
 versus GPL's *strong* copyleft (obligations apply to the whole combined work); both default
 to failing the build under the copyleft guard below, since either can require you to release
@@ -372,6 +377,11 @@ block = ["Gpl3"]
   [custom one](#4-custom-licenses-in-code), via a `custom:` reference) — for POMs with no
   `<licenses>` block, an ambiguous/wrong block, or dependencies that aren't Maven artifacts
   at all (vendor terms, government open-data licenses, bundled fonts).
+  You can also override specific fields (e.g. `author = "..."`, `elementLicensed = "..."`, `url = "..."`)
+  without specifying a `license` key — the plugin will auto-match the license from the POM / repo
+  while applying your field overrides. Non-overridden fields are automatically populated from POM
+  metadata and best-effort fallbacks by default (can be disabled via `autoPopulate = false` per entry
+  or `linkedLicense { autoPopulate = false }` project-wide).
 - **`[ignored]`** excludes a coordinate from the catalog entirely. A reason string is
   required — it's an audit trail, not just a switch.
 - **`[copyleft-allowed]`** allow-lists a coordinate past the copyleft guard (§3.5). A reason
@@ -450,12 +460,12 @@ being copyleft.
 ### 3.5 Copyleft guard (on by default)
 
 When a matched or overridden dependency resolves to a license with `isCopyleft == true`
-(GPL2/GPL3/LGPL2.1/LGPL3/MPL2 among the built-ins), `generateLicenseCatalog` fails the build
+(GPL2/GPL3/AGPL3/LGPL2.1/LGPL3/MPL2/EPL1/CDDL1/CDDL1.1 among the built-ins), `generateLicenseCatalog` fails the build
 — same aggregated-list-of-offenders style as §3.3 — unless that coordinate has a
 `[copyleft-allowed]` entry, or you set `failOnCopyleft = false` project-wide.
 
-`failOnCopyleft` governs strong copyleft (`copyleftStrength == STRONG`, e.g. GPL) and is
-also the *default* for weak copyleft (`copyleftStrength == WEAK`, e.g. LGPL/MPL) when you
+`failOnCopyleft` governs strong copyleft (`copyleftStrength == STRONG`, e.g. GPL, AGPL) and is
+also the *default* for weak copyleft (`copyleftStrength == WEAK`, e.g. LGPL, MPL, EPL, CDDL) when you
 haven't said anything more specific. To treat weak copyleft differently from strong, set
 `failOnSoftCopyleft` (`Boolean?`, default `null`):
 

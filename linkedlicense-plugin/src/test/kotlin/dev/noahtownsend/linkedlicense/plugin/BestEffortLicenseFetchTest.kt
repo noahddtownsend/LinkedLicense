@@ -25,6 +25,79 @@ class LicenseTextMatcherTest {
     }
 
     @Test
+    fun `match() recognizes MIT-0 license text`() {
+        val text =
+            """
+            MIT No Attribution
+
+            Copyright 2024 Jane Doe
+
+            Permission is hereby granted, free of charge, to any person obtaining a copy
+            of this software and associated documentation files (the "Software"), to deal ...
+
+            THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+            IMPLIED ...
+            """.trimIndent()
+
+        assertEquals(License.Mit0::class, LicenseTextMatcher.match(text))
+    }
+
+    @Test
+    fun `match() recognizes Eclipse Public License 1_0 text`() {
+        val text =
+            """
+            Eclipse Public License - v 1.0
+
+            THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICENSE ("AGREEMENT").
+            ANY USE, REPRODUCTION OR DISTRIBUTION OF THE PROGRAM CONSTITUTES RECIPIENT'S ACCEPTANCE OF THIS AGREEMENT.
+            """.trimIndent()
+
+        assertEquals(License.Epl1::class, LicenseTextMatcher.match(text))
+    }
+
+    @Test
+    fun `match() recognizes AGPL 3_0 text`() {
+        val text =
+            """
+            GNU AFFERO GENERAL PUBLIC LICENSE
+            Version 3, 19 November 2007
+
+            Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+            Everyone is permitted to copy and distribute verbatim copies
+            """.trimIndent()
+
+        assertEquals(License.Agpl3::class, LicenseTextMatcher.match(text))
+    }
+
+    @Test
+    fun `match() recognizes CDDL 1_1 text`() {
+        val text =
+            """
+            COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL)
+            Version 1.1
+
+            1. Definitions.
+            1.1. "Contributor" means each individual or entity that creates or contributes to the creation of Modifications.
+            """.trimIndent()
+
+        assertEquals(License.Cddl1_1::class, LicenseTextMatcher.match(text))
+    }
+
+    @Test
+    fun `match() recognizes CDDL 1_0 text`() {
+        val text =
+            """
+            COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL)
+            Version 1.0
+
+            1. Definitions.
+            1.1. "Contributor" means each individual or entity that creates or contributes to the creation of Modifications.
+            """.trimIndent()
+
+        assertEquals(License.Cddl1::class, LicenseTextMatcher.match(text))
+    }
+
+    @Test
     fun `match() recognizes canonical Apache 2 license text`() {
         val text =
             """

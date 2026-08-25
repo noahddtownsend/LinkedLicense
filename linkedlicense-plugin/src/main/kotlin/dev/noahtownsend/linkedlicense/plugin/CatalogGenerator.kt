@@ -64,6 +64,8 @@ object CatalogGenerator {
         bestEffortFetch: ((repoUrl: String, ref: String) -> KClass<out License>?)? = null,
         /** Invoked once per coordinate resolved via [bestEffortFetch] - the warning trigger point. */
         onBestGuess: (Coordinate, KClass<out License>) -> Unit = { _, _ -> },
+        /** Default for auto-populating non-overridden fields from POM/best-effort metadata. */
+        autoPopulate: Boolean = true,
     ): CatalogResult {
         val entries = mutableListOf<Pair<Coordinate, CatalogEntry>>()
         val unresolved = mutableListOf<Coordinate>()
@@ -85,7 +87,7 @@ object CatalogGenerator {
         fun policyId(spec: OverrideSpec?, matched: kotlin.reflect.KClass<out dev.noahtownsend.linkedlicense.License>?): String =
             when {
                 spec is OverrideSpec.Custom -> "custom:${spec.fullyQualifiedName}"
-                spec is OverrideSpec.BuiltIn -> BuiltInLicenses.policyId(spec.kClass)
+                spec is OverrideSpec.BuiltIn && spec.kClass != null -> BuiltInLicenses.policyId(spec.kClass)
                 matched != null -> BuiltInLicenses.policyId(matched)
                 else -> error("policyId requested for an unresolved coordinate")
             }
@@ -112,28 +114,60 @@ object CatalogGenerator {
                 }
 
                 is OverrideSpec.BuiltIn -> {
-                    val typeId = policyId(overrideSpec, null)
+                    val pomInfo = pomInfoOf(coordinate)
+                    val effectiveAutoPopulate = overrideSpec.autoPopulate ?: autoPopulate
+
+                    val resolvedKClass =
+                        overrideSpec.kClass ?: run {
+                            val fieldMatched =
+                                pomInfo.licenses.firstNotNullOfOrNull { LicenseMatcher.match(it.name, it.url) }
+
+                            fieldMatched
+                                ?: pomInfo.scmUrl?.let { repoUrl -> bestEffortFetch?.invoke(repoUrl, coordinate.version) }
+                                    ?.also { onBestGuess(coordinate, it) }
+                        }
+
+                    if (resolvedKClass == null) {
+                        if (failOnUnknown) {
+                            unresolved += coordinate
+                        }
+                        continue
+                    }
+
+                    val typeId = policyId(overrideSpec, resolvedKClass)
 
                     if (!overrides.licensePolicy.isAllowed(typeId)) {
                         policyOffenders += PolicyOffender(coordinate, typeId)
                         continue
                     }
 
-                    if (failsCopyleftGuard(overrideSpec.kClass) &&
+                    if (failsCopyleftGuard(resolvedKClass) &&
                         !overrides.copyleftAllowed.containsKey(coordinate.moduleId)
                     ) {
                         copyleftOffenders += coordinate
                         continue
                     }
 
+                    val resolvedElementLicensed =
+                        overrideSpec.elementLicensed
+                            ?: if (effectiveAutoPopulate) pomInfo.resolveElementLicensed(coordinate.artifact) else coordinate.artifact
+
+                    val resolvedAuthor =
+                        overrideSpec.author
+                            ?: if (effectiveAutoPopulate) pomInfo.resolveAuthor(coordinate.group) else coordinate.group
+
+                    val resolvedUrl =
+                        overrideSpec.url
+                            ?: if (effectiveAutoPopulate) pomInfo.licenses.firstOrNull { it.url != null }?.url ?: pomInfo.scmUrl else null
+
                     entries +=
                         coordinate to
                         CatalogEntry.BuiltIn(
                             buildInExpression(
-                                kClass = overrideSpec.kClass,
-                                elementLicensed = overrideSpec.elementLicensed ?: coordinate.artifact,
-                                author = overrideSpec.author ?: coordinate.group,
-                                url = overrideSpec.url,
+                                kClass = resolvedKClass,
+                                elementLicensed = resolvedElementLicensed,
+                                author = resolvedAuthor,
+                                url = resolvedUrl,
                                 text = overrideSpec.text,
                                 licenseName = overrideSpec.licenseName,
                             ),
@@ -171,14 +205,23 @@ object CatalogGenerator {
                         continue
                     }
 
+                    val resolvedElementLicensed =
+                        if (autoPopulate) pomInfo.resolveElementLicensed(coordinate.artifact) else coordinate.artifact
+
+                    val resolvedAuthor =
+                        if (autoPopulate) pomInfo.resolveAuthor(coordinate.group) else coordinate.group
+
+                    val resolvedUrl =
+                        if (autoPopulate) pomInfo.licenses.firstOrNull { it.url != null }?.url ?: pomInfo.scmUrl else null
+
                     entries +=
                         coordinate to
                         CatalogEntry.BuiltIn(
                             buildInExpression(
                                 kClass = matched,
-                                elementLicensed = coordinate.artifact,
-                                author = pomInfo.organizationName ?: coordinate.group,
-                                url = pomInfo.licenses.firstOrNull { it.url != null }?.url,
+                                elementLicensed = resolvedElementLicensed,
+                                author = resolvedAuthor,
+                                url = resolvedUrl,
                                 text = null,
                             ),
                         )
@@ -204,14 +247,17 @@ object CatalogGenerator {
                 }
 
                 is OverrideSpec.BuiltIn -> {
-                    val typeId = BuiltInLicenses.policyId(spec.kClass)
+                    val kClass =
+                        spec.kClass
+                            ?: throw org.gradle.api.GradleException("[assets] entry '$assetKey' must specify a 'license' key.")
+                    val typeId = BuiltInLicenses.policyId(kClass)
 
                     if (!overrides.licensePolicy.isAllowed(typeId)) {
                         assetPolicyOffenders += AssetPolicyOffender(assetKey, typeId)
                         continue
                     }
 
-                    if (failsCopyleftGuard(spec.kClass) &&
+                    if (failsCopyleftGuard(kClass) &&
                         !overrides.copyleftAllowed.containsKey(assetKey)
                     ) {
                         assetCopyleftOffenders += assetKey
@@ -222,7 +268,7 @@ object CatalogGenerator {
                         assetKey to
                         CatalogEntry.BuiltIn(
                             buildInExpression(
-                                kClass = spec.kClass,
+                                kClass = kClass,
                                 elementLicensed = spec.elementLicensed ?: assetKey,
                                 author = spec.author ?: assetKey,
                                 url = spec.url,
