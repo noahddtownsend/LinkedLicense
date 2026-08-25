@@ -116,6 +116,7 @@ alongside scanned dependencies without hand-merging two lists yourself.
 | `License.Mit0` | `year: String` | `NONE` |
 | `License.Apache1_1` | — | `NONE` |
 | `License.Apache2` | — | `NONE` |
+| `License.Bsd0Clause` | `year: String` | `NONE` |
 | `License.Bsd2Clause` | `year: String` | `NONE` |
 | `License.Bsd3Clause` | `year: String` | `NONE` |
 | `License.Isc` | `year: String` | `NONE` |
@@ -124,8 +125,16 @@ alongside scanned dependencies without hand-merging two lists yourself.
 | `License.Agpl3` | — | `STRONG` |
 | `License.Lgpl2_1` | — | `WEAK` |
 | `License.Lgpl3` | — | `WEAK` |
+| `License.Mpl1` | — | `WEAK` |
+| `License.Mpl1_1` | — | `WEAK` |
 | `License.Mpl2` | — | `WEAK` |
 | `License.Epl1` | — | `WEAK` |
+| `License.Epl2` | — | `WEAK` |
+| `License.Edl1` | — | `NONE` |
+| `License.Bsl1` | — | `NONE` |
+| `License.Zlib` | — | `NONE` |
+| `License.MsPl` | — | `NONE` |
+| `License.MsRl` | — | `WEAK` |
 | `License.Cddl1` | — | `WEAK` |
 | `License.Cddl1_1` | — | `WEAK` |
 | `License.Ofl` | — | `NONE` |
@@ -137,6 +146,10 @@ alongside scanned dependencies without hand-merging two lists yourself.
 | `License.UsGovernmentPublicDomain` | — | `NONE` |
 | `License.CopyrightExpired` | `jurisdiction: String? = null` | `NONE` |
 | `License.Odbl` | — | `NONE`\*\* |
+| `License.AmazonSoftwareLicense` | — | `NONE` |
+| `License.Embrace` | — | `NONE` |
+| `License.Firebase` | — | `NONE` |
+| `License.AndroidSdk` | — | `NONE` |
 | `License.Custom` | `text: String`, `licenseName: String? = null` | `NONE` (escape hatch for anything not listed above) |
 
 \* `CreativeCommons` variants with `NC`/`ND`/`SA` terms carry redistribution *conditions*,
@@ -165,8 +178,8 @@ plus-50-or-70-years, but not universally), so `CopyrightExpired` takes an option
 if you're asserting the work is public domain more broadly (e.g. clearly pre-1900 with no
 plausible live copyright anywhere).
 
-`copyleftStrength` is non-`NONE` for `Gpl2`/`Gpl3` (`STRONG`) and `Lgpl2_1`/`Lgpl3`/`Mpl2`/`Epl1`
-(`WEAK`) — anything with reciprocal/share-alike source-disclosure obligations. LGPL, MPL, and EPL
+`copyleftStrength` is non-`NONE` for `Gpl2`/`Gpl3` (`STRONG`) and `Lgpl2_1`/`Lgpl3`/`Mpl1`/`Mpl1_1`/`Mpl2`/`Epl1`/`Epl2`/`MsRl`/`Cddl1`/`Cddl1_1`
+(`WEAK`) — anything with reciprocal/share-alike source-disclosure obligations. LGPL, MPL, EPL, MS-RL, and CDDL
 are *weak* copyleft (obligations apply per-file/per-library, not to your whole program)
 versus GPL's *strong* copyleft (obligations apply to the whole combined work); both default
 to failing the build under the copyleft guard below, since either can require you to release
@@ -460,12 +473,12 @@ being copyleft.
 ### 3.5 Copyleft guard (on by default)
 
 When a matched or overridden dependency resolves to a license with `isCopyleft == true`
-(GPL2/GPL3/AGPL3/LGPL2.1/LGPL3/MPL2/EPL1/CDDL1/CDDL1.1 among the built-ins), `generateLicenseCatalog` fails the build
+(GPL2/GPL3/AGPL3/LGPL2.1/LGPL3/MPL1/MPL1.1/MPL2/EPL1/EPL2/MSRL/CDDL1/CDDL1.1 among the built-ins), `generateLicenseCatalog` fails the build
 — same aggregated-list-of-offenders style as §3.3 — unless that coordinate has a
 `[copyleft-allowed]` entry, or you set `failOnCopyleft = false` project-wide.
 
 `failOnCopyleft` governs strong copyleft (`copyleftStrength == STRONG`, e.g. GPL, AGPL) and is
-also the *default* for weak copyleft (`copyleftStrength == WEAK`, e.g. LGPL, MPL, EPL, CDDL) when you
+also the *default* for weak copyleft (`copyleftStrength == WEAK`, e.g. LGPL, MPL, EPL, MS-RL, CDDL) when you
 haven't said anything more specific. To treat weak copyleft differently from strong, set
 `failOnSoftCopyleft` (`Boolean?`, default `null`):
 
