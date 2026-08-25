@@ -34,6 +34,7 @@ class MavenFixtureRepo(
         dependencies: List<Dep> = emptyList(),
         noticeText: String? = null,
         packaging: String = "jar",
+        properties: Map<String, String> = emptyMap(),
     ) {
         val moduleDir = File(dir, "${group.replace('.', '/')}/$artifact/$version").apply { mkdirs() }
 
@@ -45,6 +46,17 @@ class MavenFixtureRepo(
                 |    <artifactId>$parentArtifact</artifactId>
                 |    <version>$parentVersion</version>
                 |  </parent>
+                """.trimMargin()
+            } else {
+                ""
+            }
+
+        val propertiesXml =
+            if (properties.isNotEmpty()) {
+                """
+                |  <properties>
+                ${properties.entries.joinToString("\n") { (k, v) -> "    <$k>$v</$k>" }}
+                |  </properties>
                 """.trimMargin()
             } else {
                 ""
@@ -110,6 +122,7 @@ class MavenFixtureRepo(
             |  <artifactId>$artifact</artifactId>
             |  <version>$version</version>
             |  <packaging>$packaging</packaging>
+            $propertiesXml
             $nameXml
             $organizationXml
             $developersXml

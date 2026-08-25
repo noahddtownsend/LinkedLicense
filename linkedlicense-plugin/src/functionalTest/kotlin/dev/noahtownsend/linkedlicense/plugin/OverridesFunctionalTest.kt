@@ -78,4 +78,54 @@ class OverridesFunctionalTest {
         assertTrue(generated.contains("MyCompanyLicense"), generated)
         assertTrue(!generated.contains("License.Custom"), generated)
     }
+
+    @Test
+    fun `POM properties and Maven built-in variables in metadata are interpolated into generated output`() {
+        val repo = MavenFixtureRepo(File(projectDir, "repo"))
+        repo.publish(
+            group = "com.contentful.java",
+            artifact = "java-sdk",
+            version = "18.5.25",
+            projectName = "\${project.groupId}:\${project.artifactId}",
+            organizationName = "\${company.name}, GmbH.",
+            licenseName = "Apache-2.0",
+            licenseUrl = "http://www.apache.org/licenses/\${lic.file}",
+            properties = mapOf("company.name" to "Contentful", "lic.file" to "LICENSE-2.0.txt"),
+        )
+
+        val fixture = FixtureProject(projectDir, repo)
+        fixture.writeSettings()
+        fixture.writeBuildFile(dependencyCoordinates = listOf("com.contentful.java:java-sdk:18.5.25"))
+
+        val result = fixture.run("generateLicenseCatalog")
+
+        assertTrue(result.output.contains("BUILD SUCCESSFUL"), result.output)
+        val generated = fixture.generatedLicensesFile().readText()
+        assertTrue(generated.contains("elementLicensed = \"com.contentful.java:java-sdk\""), generated)
+        assertTrue(generated.contains("author = \"Contentful, GmbH.\""), generated)
+        assertTrue(generated.contains("url = \"http://www.apache.org/licenses/LICENSE-2.0.txt\""), generated)
+    }
+
+    @Test
+    fun `unresolved POM properties fall back to artifactId and log a warning`() {
+        val repo = MavenFixtureRepo(File(projectDir, "repo"))
+        repo.publish(
+            group = "com.example",
+            artifact = "broken-var",
+            version = "1.0",
+            projectName = "\${unknown.placeholder}",
+            licenseName = "MIT",
+        )
+
+        val fixture = FixtureProject(projectDir, repo)
+        fixture.writeSettings()
+        fixture.writeBuildFile(dependencyCoordinates = listOf("com.example:broken-var:1.0"))
+
+        val result = fixture.run("generateLicenseCatalog")
+
+        assertTrue(result.output.contains("BUILD SUCCESSFUL"), result.output)
+        val generated = fixture.generatedLicensesFile().readText()
+        assertTrue(generated.contains("elementLicensed = \"broken-var\""), generated)
+        assertTrue(result.output.contains("unresolved property placeholder"), result.output)
+    }
 }

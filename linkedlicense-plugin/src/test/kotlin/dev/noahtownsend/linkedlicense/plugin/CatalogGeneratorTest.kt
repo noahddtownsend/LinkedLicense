@@ -743,4 +743,87 @@ class CatalogGeneratorTest {
         assertTrue(entry.expression.contains("elementLicensed = \"foo\""), entry.expression)
         assertTrue(!entry.expression.contains("url ="), entry.expression)
     }
+
+    @Test
+    fun `resolve() interpolates project and pom built-in placeholders in POM name and metadata`() {
+        val coord = Coordinate("com.contentful.java", "java-sdk", "18.5.25")
+        val rawInfo = PomInfo(
+            name = "\${project.groupId}:\${project.artifactId}",
+            organizationName = "\${project.groupId} Team",
+            licenses = listOf(PomLicense("Apache-2.0", "https://github.com/\${project.artifactId}/license")),
+        )
+        val interpolatedInfo = rawInfo.interpolated(coord)
+
+        val result = CatalogGenerator.resolve(
+            coordinates = listOf(coord),
+            pomInfoOf = pomInfoFor(mapOf(coord to interpolatedInfo)),
+            overrides = OverridesConfig.EMPTY,
+            failOnCopyleft = true,
+            failOnUnknown = true,
+        )
+
+        val entry = result.entries.single().second as CatalogEntry.BuiltIn
+        assertTrue(entry.expression.contains("elementLicensed = \"com.contentful.java:java-sdk\""), entry.expression)
+        assertTrue(entry.expression.contains("author = \"com.contentful.java Team\""), entry.expression)
+        assertTrue(entry.expression.contains("url = \"https://github.com/java-sdk/license\""), entry.expression)
+    }
+
+    @Test
+    fun `resolve() interpolates custom properties and inherited parent properties`() {
+        val parent = PomInfo(
+            properties = mapOf("company.name" to "Acme Corp", "base.url" to "https://acme.org"),
+        )
+        val child = PomInfo(
+            name = "\${prefix}-\${project.artifactId}",
+            organizationName = "\${company.name}",
+            properties = mapOf("prefix" to "awesome"),
+            licenses = listOf(PomLicense("MIT", "\${base.url}/terms")),
+        )
+        val coord = Coordinate("org.acme", "super-widget", "2.0.0")
+        val merged = child.withParent(parent).interpolated(coord)
+
+        val result = CatalogGenerator.resolve(
+            coordinates = listOf(coord),
+            pomInfoOf = pomInfoFor(mapOf(coord to merged)),
+            overrides = OverridesConfig.EMPTY,
+            failOnCopyleft = true,
+            failOnUnknown = true,
+        )
+
+        val entry = result.entries.single().second as CatalogEntry.BuiltIn
+        assertTrue(entry.expression.contains("elementLicensed = \"awesome-super-widget\""), entry.expression)
+        assertTrue(entry.expression.contains("author = \"Acme Corp\""), entry.expression)
+        assertTrue(entry.expression.contains("url = \"https://acme.org/terms\""), entry.expression)
+    }
+
+    @Test
+    fun `resolve() falls back to artifact coordinate and triggers warning callback when placeholder is unresolved`() {
+        val coord = Coordinate("com.example", "broken-meta", "1.0")
+        val info = PomInfo(
+            name = "\${unresolvable.variable}",
+            organizationName = "\${unresolvable.author}",
+            licenses = listOf(PomLicense("MIT", null)),
+        ).interpolated(coord)
+
+        var warnedCoord: Coordinate? = null
+        var warnedName: String? = null
+
+        val result = CatalogGenerator.resolve(
+            coordinates = listOf(coord),
+            pomInfoOf = pomInfoFor(mapOf(coord to info)),
+            overrides = OverridesConfig.EMPTY,
+            failOnCopyleft = true,
+            failOnUnknown = true,
+            onUnresolvedPlaceholder = { c, n ->
+                warnedCoord = c
+                warnedName = n
+            },
+        )
+
+        val entry = result.entries.single().second as CatalogEntry.BuiltIn
+        assertTrue(entry.expression.contains("elementLicensed = \"broken-meta\""), entry.expression)
+        assertTrue(entry.expression.contains("author = \"com.example\""), entry.expression)
+        assertEquals(coord, warnedCoord)
+        assertEquals("\${unresolvable.variable}", warnedName)
+    }
 }

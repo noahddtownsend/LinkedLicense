@@ -42,6 +42,16 @@ abstract class License(
     val isCopyleft: Boolean get() = copyleftStrength != CopyleftStrength.NONE
 
     /**
+     * Whether this license requires notice/attribution to be declared or displayed in the
+     * consuming software (e.g. in binary distributions or an in-app licenses screen).
+     *
+     * Most licenses (MIT, Apache 2.0, BSD, GPL, etc.) require attribution (`true`).
+     * Dedicated public-domain or zero-attribution licenses (0BSD, MIT-0, CC0, Unlicense, Public Domain)
+     * waive this obligation (`false`).
+     */
+    open val requiresAttribution: Boolean get() = true
+
+    /**
      * A short, display-friendly label for this license (e.g. `"MIT"`, `"Apache 2.0"`).
      *
      * Intended for compact UI surfaces (chips, corner labels) where the full [licenseText]
@@ -91,6 +101,8 @@ SOFTWARE."""
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
     ) : License(elementLicensed, author, url, kind) {
+        override val requiresAttribution: Boolean get() = false
+
         override val shortName: String get() = "MIT-0"
 
         override val licenseText: String
@@ -500,6 +512,8 @@ PERFORMANCE OF THIS SOFTWARE."""
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
     ) : License(elementLicensed, author, url, kind) {
+        override val requiresAttribution: Boolean get() = false
+
         override val shortName: String get() = "Unlicense"
 
         override val licenseText: String = UNLICENSE_TEXT
@@ -535,6 +549,8 @@ For more information, please refer to <https://unlicense.org>"""
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
     ) : License(elementLicensed, author, url, kind) {
+        override val requiresAttribution: Boolean get() = false
+
         override val shortName: String get() = "Public Domain"
 
         override val licenseText: String
@@ -550,6 +566,8 @@ $elementLicensed by $author has been dedicated to the public domain. To the exte
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
     ) : License(elementLicensed, author, url, kind) {
+        override val requiresAttribution: Boolean get() = false
+
         override val shortName: String get() = "US Gov Public Domain"
 
         override val licenseText: String
@@ -566,6 +584,8 @@ As a work of the United States Government, this content is not subject to copyri
         val jurisdiction: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
     ) : License(elementLicensed, author, url, kind) {
+        override val requiresAttribution: Boolean get() = false
+
         override val shortName: String get() = "Public Domain (Expired)"
 
         override val licenseText: String
@@ -743,6 +763,8 @@ Full license text: https://spdx.org/licenses/CDDL-1.1.html"""
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
     ) : License(elementLicensed, author, url, kind) {
+        override val requiresAttribution: Boolean get() = false
+
         override val shortName: String get() = "CC0-1.0"
 
         override val licenseText: String
@@ -994,6 +1016,8 @@ Full legal code: https://opendatacommons.org/licenses/odbl/1-0/"""
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
     ) : License(elementLicensed, author, url, kind) {
+        override val requiresAttribution: Boolean get() = false
+
         override val shortName: String get() = "0BSD"
 
         override val licenseText: String
@@ -1326,6 +1350,7 @@ Terms and Conditions: https://developer.android.com/studio/terms.html"""
         val licenseName: String? = null,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
+        override val requiresAttribution: Boolean = true,
     ) : License(elementLicensed, author, url, kind) {
         override val shortName: String get() = licenseName ?: "Custom"
 

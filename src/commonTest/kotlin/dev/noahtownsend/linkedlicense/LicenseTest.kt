@@ -770,4 +770,85 @@ class LicenseTest {
 
         assertEquals(License.Kind.ASSET, license.kind)
     }
+
+    @Test
+    fun `requiresAttribution is false for zero-attribution and public domain licenses`() {
+        val noAttributionLicenses =
+            listOf(
+                License.Mit0(elementLicensed = "e", author = "a", year = "2020"),
+                License.Bsd0Clause(elementLicensed = "e", author = "a", year = "2020"),
+                License.Unlicense(elementLicensed = "e", author = "a"),
+                License.Cc0(elementLicensed = "e", author = "a"),
+                License.PublicDomain(elementLicensed = "e", author = "a"),
+                License.UsGovernmentPublicDomain(elementLicensed = "e", author = "a"),
+                License.CopyrightExpired(elementLicensed = "e", author = "a"),
+            )
+
+        noAttributionLicenses.forEach { license ->
+            assertFalse(license.requiresAttribution, "${license::class.simpleName} should not require attribution")
+        }
+    }
+
+    @Test
+    fun `requiresAttribution is true for standard attribution licenses`() {
+        val attributionLicenses =
+            listOf(
+                License.MIT(elementLicensed = "e", author = "a", year = "2020"),
+                License.Apache1_1(elementLicensed = "e", author = "a"),
+                License.Apache2(elementLicensed = "e", author = "a"),
+                License.Bsd2Clause(elementLicensed = "e", author = "a", year = "2020"),
+                License.Bsd3Clause(elementLicensed = "e", author = "a", year = "2020"),
+                License.Isc(elementLicensed = "e", author = "a", year = "2020"),
+                License.Gpl2(elementLicensed = "e", author = "a"),
+                License.Gpl3(elementLicensed = "e", author = "a"),
+                License.Agpl3(elementLicensed = "e", author = "a"),
+                License.Lgpl2_1(elementLicensed = "e", author = "a"),
+                License.Lgpl3(elementLicensed = "e", author = "a"),
+                License.Mpl1(elementLicensed = "e", author = "a"),
+                License.Mpl1_1(elementLicensed = "e", author = "a"),
+                License.Mpl2(elementLicensed = "e", author = "a"),
+                License.Epl1(elementLicensed = "e", author = "a"),
+                License.Epl2(elementLicensed = "e", author = "a"),
+                License.Edl1(elementLicensed = "e", author = "a"),
+                License.Bsl1(elementLicensed = "e", author = "a"),
+                License.Zlib(elementLicensed = "e", author = "a"),
+                License.MsPl(elementLicensed = "e", author = "a"),
+                License.MsRl(elementLicensed = "e", author = "a"),
+                License.Cddl1(elementLicensed = "e", author = "a"),
+                License.Cddl1_1(elementLicensed = "e", author = "a"),
+                License.CreativeCommons(variant = CcVariant.BY, version = CcVersion.V4_0, elementLicensed = "e", author = "a"),
+                License.CreativeCommons(variant = CcVariant.BY_SA, version = CcVersion.V4_0, elementLicensed = "e", author = "a"),
+                License.Ofl(elementLicensed = "e", author = "a"),
+                License.OpenGovernmentLicence(jurisdiction = "UK", version = OglVersion.V3_0, elementLicensed = "e", author = "a"),
+                License.Odbl(elementLicensed = "e", author = "a"),
+                License.AmazonSoftwareLicense(elementLicensed = "e", author = "a"),
+                License.Embrace(elementLicensed = "e", author = "a"),
+                License.Firebase(elementLicensed = "e", author = "a"),
+                License.AndroidSdk(elementLicensed = "e", author = "a"),
+            )
+
+        attributionLicenses.forEach { license ->
+            assertTrue(license.requiresAttribution, "${license::class.simpleName} should require attribution")
+        }
+    }
+
+    @Test
+    fun `Custom license defaults requiresAttribution to true`() {
+        val license = License.Custom(elementLicensed = "e", author = "a", text = "t")
+
+        assertTrue(license.requiresAttribution)
+    }
+
+    @Test
+    fun `Custom license allows configuring requiresAttribution to false`() {
+        val license =
+            License.Custom(
+                elementLicensed = "e",
+                author = "a",
+                text = "t",
+                requiresAttribution = false,
+            )
+
+        assertFalse(license.requiresAttribution)
+    }
 }

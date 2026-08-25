@@ -87,6 +87,8 @@ abstract class License(
     abstract val licenseText: String
     open val copyleftStrength: CopyleftStrength get() = CopyleftStrength.NONE
     val isCopyleft: Boolean get() = copyleftStrength != CopyleftStrength.NONE
+    open val requiresAttribution: Boolean get() = true
+    open val shortName: String get() = "Custom"
 
     enum class Kind { DEPENDENCY, ASSET }
     enum class CopyleftStrength { NONE, WEAK, STRONG }
@@ -99,6 +101,13 @@ distinction described below — `isCopyleft` is now a derived, non-overridable c
 keeps working unchanged; only subclasses that need to *declare* copyleft status override
 `copyleftStrength` instead.
 
+`requiresAttribution` indicates whether the license requires notice/attribution to be declared
+or displayed in the consuming software (e.g. in binary distributions or an in-app licenses UI).
+Most licenses (MIT, Apache 2.0, BSD, GPL, etc.) require attribution (`true`), while dedicated
+public-domain or zero-attribution licenses (0BSD, MIT-0, CC0, Unlicense, Public Domain) waive
+this requirement (`false`). Consuming software can use this property to filter or distinguish
+mandatory declarations from optional/no-attribution entries.
+
 `kind` distinguishes an actual code dependency (the default) from a bundled non-dependency
 asset — a dataset, image, font, or similar — that carries its own license/attribution but
 was never resolved off a Gradle dependency graph. It's a constructor parameter on the base
@@ -110,47 +119,47 @@ alongside scanned dependencies without hand-merging two lists yourself.
 
 ### Built-in types
 
-| Type | Constructor params (beyond `elementLicensed`/`author`/`url`) | `copyleftStrength` |
-|---|---|---|
-| `License.MIT` | `year: String` | `NONE` |
-| `License.Mit0` | `year: String` | `NONE` |
-| `License.Apache1_1` | — | `NONE` |
-| `License.Apache2` | — | `NONE` |
-| `License.Bsd0Clause` | `year: String` | `NONE` |
-| `License.Bsd2Clause` | `year: String` | `NONE` |
-| `License.Bsd3Clause` | `year: String` | `NONE` |
-| `License.Isc` | `year: String` | `NONE` |
-| `License.Gpl2` | — | `STRONG` |
-| `License.Gpl3` | — | `STRONG` |
-| `License.Agpl3` | — | `STRONG` |
-| `License.Lgpl2_1` | — | `WEAK` |
-| `License.Lgpl3` | — | `WEAK` |
-| `License.Mpl1` | — | `WEAK` |
-| `License.Mpl1_1` | — | `WEAK` |
-| `License.Mpl2` | — | `WEAK` |
-| `License.Epl1` | — | `WEAK` |
-| `License.Epl2` | — | `WEAK` |
-| `License.Edl1` | — | `NONE` |
-| `License.Bsl1` | — | `NONE` |
-| `License.Zlib` | — | `NONE` |
-| `License.MsPl` | — | `NONE` |
-| `License.MsRl` | — | `WEAK` |
-| `License.Cddl1` | — | `WEAK` |
-| `License.Cddl1_1` | — | `WEAK` |
-| `License.Ofl` | — | `NONE` |
-| `License.Unlicense` | — | `NONE` |
-| `License.Cc0` | — | `NONE` |
-| `License.CreativeCommons` | `variant: CcVariant`, `version: CcVersion` | `NONE`* |
-| `License.OpenGovernmentLicence` | `jurisdiction: String`, `version: OglVersion` | `NONE` |
-| `License.PublicDomain` | — | `NONE` |
-| `License.UsGovernmentPublicDomain` | — | `NONE` |
-| `License.CopyrightExpired` | `jurisdiction: String? = null` | `NONE` |
-| `License.Odbl` | — | `NONE`\*\* |
-| `License.AmazonSoftwareLicense` | — | `NONE` |
-| `License.Embrace` | — | `NONE` |
-| `License.Firebase` | — | `NONE` |
-| `License.AndroidSdk` | — | `NONE` |
-| `License.Custom` | `text: String`, `licenseName: String? = null` | `NONE` (escape hatch for anything not listed above) |
+| Type | Constructor params (beyond `elementLicensed`/`author`/`url`) | `copyleftStrength` | `requiresAttribution` |
+|---|---|---|---|
+| `License.MIT` | `year: String` | `NONE` | `true` |
+| `License.Mit0` | `year: String` | `NONE` | `false` |
+| `License.Apache1_1` | — | `NONE` | `true` |
+| `License.Apache2` | — | `NONE` | `true` |
+| `License.Bsd0Clause` | `year: String` | `NONE` | `false` |
+| `License.Bsd2Clause` | `year: String` | `NONE` | `true` |
+| `License.Bsd3Clause` | `year: String` | `NONE` | `true` |
+| `License.Isc` | `year: String` | `NONE` | `true` |
+| `License.Gpl2` | — | `STRONG` | `true` |
+| `License.Gpl3` | — | `STRONG` | `true` |
+| `License.Agpl3` | — | `STRONG` | `true` |
+| `License.Lgpl2_1` | — | `WEAK` | `true` |
+| `License.Lgpl3` | — | `WEAK` | `true` |
+| `License.Mpl1` | — | `WEAK` | `true` |
+| `License.Mpl1_1` | — | `WEAK` | `true` |
+| `License.Mpl2` | — | `WEAK` | `true` |
+| `License.Epl1` | — | `WEAK` | `true` |
+| `License.Epl2` | — | `WEAK` | `true` |
+| `License.Edl1` | — | `NONE` | `true` |
+| `License.Bsl1` | — | `NONE` | `true` |
+| `License.Zlib` | — | `NONE` | `true` |
+| `License.MsPl` | — | `NONE` | `true` |
+| `License.MsRl` | — | `WEAK` | `true` |
+| `License.Cddl1` | — | `WEAK` | `true` |
+| `License.Cddl1_1` | — | `WEAK` | `true` |
+| `License.Ofl` | — | `NONE` | `true` |
+| `License.Unlicense` | — | `NONE` | `false` |
+| `License.Cc0` | — | `NONE` | `false` |
+| `License.CreativeCommons` | `variant: CcVariant`, `version: CcVersion` | `NONE`* | `true` |
+| `License.OpenGovernmentLicence` | `jurisdiction: String`, `version: OglVersion` | `NONE` | `true` |
+| `License.PublicDomain` | — | `NONE` | `false` |
+| `License.UsGovernmentPublicDomain` | — | `NONE` | `false` |
+| `License.CopyrightExpired` | `jurisdiction: String? = null` | `NONE` | `false` |
+| `License.Odbl` | — | `NONE`\*\* | `true` |
+| `License.AmazonSoftwareLicense` | — | `NONE` | `true` |
+| `License.Embrace` | — | `NONE` | `true` |
+| `License.Firebase` | — | `NONE` | `true` |
+| `License.AndroidSdk` | — | `NONE` | `true` |
+| `License.Custom` | `text: String`, `licenseName: String? = null`, `requiresAttribution: Boolean = true` | `NONE` | `true` (configurable) |
 
 \* `CreativeCommons` variants with `NC`/`ND`/`SA` terms carry redistribution *conditions*,
 but none require releasing your own source code the way GPL-family licenses do, so they're

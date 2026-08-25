@@ -118,4 +118,18 @@ object BuiltInLicenses {
         )
 
     fun requiresYear(kClass: KClass<out License>): Boolean = kClass in requiresYear
+
+    /** Built-in [License] subtypes that do not require attribution/declaration in consuming software. */
+    private val noAttributionRequired: Set<KClass<out License>> =
+        setOf(
+            License.Mit0::class,
+            License.Bsd0Clause::class,
+            License.Unlicense::class,
+            License.Cc0::class,
+            License.PublicDomain::class,
+            License.UsGovernmentPublicDomain::class,
+            License.CopyrightExpired::class,
+        )
+
+    fun requiresAttribution(kClass: KClass<out License>): Boolean = kClass !in noAttributionRequired
 }

@@ -66,11 +66,24 @@ object CatalogGenerator {
         onBestGuess: (Coordinate, KClass<out License>) -> Unit = { _, _ -> },
         /** Default for auto-populating non-overridden fields from POM/best-effort metadata. */
         autoPopulate: Boolean = true,
+        /** Invoked when an unresolvable ${...} placeholder is found in POM metadata and fell back (Bug 6). */
+        onUnresolvedPlaceholder: (Coordinate, String) -> Unit = { _, _ -> },
     ): CatalogResult {
         val entries = mutableListOf<Pair<Coordinate, CatalogEntry>>()
         val unresolved = mutableListOf<Coordinate>()
         val copyleftOffenders = mutableListOf<Coordinate>()
         val policyOffenders = mutableListOf<PolicyOffender>()
+
+        fun resolveElement(pomInfo: PomInfo, coordinate: Coordinate, explicit: String?, autoPopulate: Boolean): String {
+            if (explicit != null) return explicit
+            if (!autoPopulate) return coordinate.artifact
+            val rawName = pomInfo.name
+            val resolved = pomInfo.resolveElementLicensed(coordinate.artifact)
+            if (rawName != null && rawName.contains("\${") && resolved == coordinate.artifact) {
+                onUnresolvedPlaceholder(coordinate, rawName)
+            }
+            return resolved
+        }
 
         /**
          * Whether a dependency with this [kClass]'s copyleft strength fails the guard, per
@@ -149,8 +162,12 @@ object CatalogGenerator {
                     }
 
                     val resolvedElementLicensed =
-                        overrideSpec.elementLicensed
-                            ?: if (effectiveAutoPopulate) pomInfo.resolveElementLicensed(coordinate.artifact) else coordinate.artifact
+                        resolveElement(
+                            pomInfo = pomInfo,
+                            coordinate = coordinate,
+                            explicit = overrideSpec.elementLicensed,
+                            autoPopulate = effectiveAutoPopulate,
+                        )
 
                     val resolvedAuthor =
                         overrideSpec.author
@@ -206,7 +223,12 @@ object CatalogGenerator {
                     }
 
                     val resolvedElementLicensed =
-                        if (autoPopulate) pomInfo.resolveElementLicensed(coordinate.artifact) else coordinate.artifact
+                        resolveElement(
+                            pomInfo = pomInfo,
+                            coordinate = coordinate,
+                            explicit = null,
+                            autoPopulate = autoPopulate,
+                        )
 
                     val resolvedAuthor =
                         if (autoPopulate) pomInfo.resolveAuthor(coordinate.group) else coordinate.group

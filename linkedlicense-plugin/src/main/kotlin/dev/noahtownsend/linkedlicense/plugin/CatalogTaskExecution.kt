@@ -157,6 +157,11 @@ internal object CatalogTaskExecution {
                     }
                 },
                 autoPopulate = extension.autoPopulate,
+                onUnresolvedPlaceholder = { coordinate, rawName ->
+                    project.logger.warn(
+                        "linkedlicense: unresolved property placeholder in POM <name> '$rawName' for ${coordinate.moduleId} — falling back to '${coordinate.artifact}'.",
+                    )
+                },
             )
 
         if (result.unresolved.isNotEmpty()) {
@@ -303,7 +308,7 @@ internal object CatalogTaskExecution {
                 depth++
             }
 
-            finalPoms[coord] = currentInfo
+            finalPoms[coord] = currentInfo.interpolated(coord)
         }
 
         return finalPoms
