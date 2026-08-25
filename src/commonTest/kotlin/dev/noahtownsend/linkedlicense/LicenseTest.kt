@@ -6,6 +6,7 @@ import dev.noahtownsend.linkedlicense.License.OglVersion
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class LicenseTest {
@@ -851,4 +852,28 @@ class LicenseTest {
 
         assertFalse(license.requiresAttribution)
     }
+
+    @Test
+    fun `notice property defaults to null across built-in licenses and custom`() {
+        val mit = License.MIT("e", "a", "2024")
+        val apache2 = License.Apache2("e", "a")
+        val custom = License.Custom("e", "a", "t")
+
+        assertNull(mit.notice)
+        assertNull(apache2.notice)
+        assertNull(custom.notice)
+    }
+
+    @Test
+    fun `notice property can be populated on built-in and custom licenses`() {
+        val noticeText = "Copyright 2016-2024 JetBrains s.r.o and contributors"
+        val apache2 = License.Apache2("Futures Kotlin Extensions", "The Android Open Source Project", notice = noticeText)
+        val mit = License.MIT("lib", "author", "2024", notice = noticeText)
+        val custom = License.Custom("e", "a", "t", notice = noticeText)
+
+        assertEquals(noticeText, apache2.notice)
+        assertEquals(noticeText, mit.notice)
+        assertEquals(noticeText, custom.notice)
+    }
 }
+

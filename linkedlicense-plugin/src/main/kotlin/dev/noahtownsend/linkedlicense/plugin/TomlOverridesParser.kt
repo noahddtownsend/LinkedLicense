@@ -146,6 +146,7 @@ object TomlOverridesParser {
             text = table.getString("text"),
             licenseName = table.getString("licenseName"),
             autoPopulate = table.getBoolean("autoPopulate"),
+            notice = table.getString("notice"),
         )
     }
 }

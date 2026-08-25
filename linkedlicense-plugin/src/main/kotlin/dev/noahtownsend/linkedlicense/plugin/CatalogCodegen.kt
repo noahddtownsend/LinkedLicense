@@ -22,7 +22,6 @@ private fun String.kotlinStringLiteral(): String =
             .replace("$", "\\$") +
         "\""
 
-/** Builds the constructor-call expression for an auto-matched or built-in-typed override. */
 fun buildInExpression(
     kClass: kotlin.reflect.KClass<out dev.noahtownsend.linkedlicense.License>,
     elementLicensed: String,
@@ -31,6 +30,7 @@ fun buildInExpression(
     text: String?,
     isAsset: Boolean = false,
     licenseName: String? = null,
+    notice: String? = null,
 ): String {
     val simpleName = BuiltInLicenses.simpleNameOf(kClass)
     val args = mutableListOf("elementLicensed = ${elementLicensed.kotlinStringLiteral()}", "author = ${author.kotlinStringLiteral()}")
@@ -53,6 +53,10 @@ fun buildInExpression(
 
     if (isAsset) {
         args += "kind = License.Kind.ASSET"
+    }
+
+    if (notice != null && notice.isNotBlank()) {
+        args += "notice = ${notice.kotlinStringLiteral()}"
     }
 
     return "License.$simpleName(${args.joinToString(", ")})"

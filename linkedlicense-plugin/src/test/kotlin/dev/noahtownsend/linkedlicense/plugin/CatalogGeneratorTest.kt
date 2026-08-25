@@ -826,4 +826,81 @@ class CatalogGeneratorTest {
         assertEquals(coord, warnedCoord)
         assertEquals("\${unresolvable.variable}", warnedName)
     }
+
+    @Test
+    fun `resolve() propagates notice text from noticeOf to generated expression`() {
+        val noticeText = "Copyright 2016-2024 JetBrains s.r.o and contributors"
+        val result =
+            CatalogGenerator.resolve(
+                coordinates = listOf(apacheCoord),
+                pomInfoOf = pomInfoFor(mapOf(apacheCoord to pomInfo("Apache-2.0"))),
+                overrides = OverridesConfig.EMPTY,
+                failOnCopyleft = true,
+                failOnUnknown = true,
+                noticeOf = { if (it == apacheCoord) noticeText else null },
+            )
+
+        val entry = result.entries.single().second as CatalogEntry.BuiltIn
+        assertTrue(entry.expression.contains("notice = \"Copyright 2016-2024 JetBrains s.r.o and contributors\""), entry.expression)
+    }
+
+    @Test
+    fun `resolve() uses override notice over noticeOf`() {
+        val scanNotice = "Scan Notice Text"
+        val overrideNotice = "Explicit Override Notice"
+        val overrides =
+            OverridesConfig(
+                overrides =
+                    mapOf(
+                        apacheCoord.moduleId to
+                            OverrideSpec.BuiltIn(
+                                kClass = License.Apache2::class,
+                                notice = overrideNotice,
+                            ),
+                    ),
+            )
+
+        val result =
+            CatalogGenerator.resolve(
+                coordinates = listOf(apacheCoord),
+                pomInfoOf = pomInfoFor(mapOf(apacheCoord to pomInfo("Apache-2.0"))),
+                overrides = overrides,
+                failOnCopyleft = true,
+                failOnUnknown = true,
+                noticeOf = { scanNotice },
+            )
+
+        val entry = result.entries.single().second as CatalogEntry.BuiltIn
+        assertTrue(entry.expression.contains("notice = \"Explicit Override Notice\""), entry.expression)
+    }
+
+    @Test
+    fun `resolve() includes notice in asset entries when present`() {
+        val assetNotice = "Asset Notice Text"
+        val overrides =
+            OverridesConfig(
+                assets =
+                    mapOf(
+                        "my-font" to
+                            OverrideSpec.BuiltIn(
+                                kClass = License.Ofl::class,
+                                notice = assetNotice,
+                            ),
+                    ),
+            )
+
+        val result =
+            CatalogGenerator.resolve(
+                coordinates = emptyList(),
+                pomInfoOf = { PomInfo(emptyList(), null) },
+                overrides = overrides,
+                failOnCopyleft = true,
+                failOnUnknown = true,
+                includeAssets = true,
+            )
+
+        val entry = result.assetEntries.single().second as CatalogEntry.BuiltIn
+        assertTrue(entry.expression.contains("notice = \"Asset Notice Text\""), entry.expression)
+    }
 }
+

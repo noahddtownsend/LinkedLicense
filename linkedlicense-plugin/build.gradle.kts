@@ -23,7 +23,7 @@ plugins {
 // kotlin-gradle-plugin itself is `compileOnly` below, never shipped, so needs no entry.
 
 group = "dev.noahtownsend"
-version = "0.9.3"
+version = "0.9.4"
 
 kotlin {
     jvmToolchain(21)

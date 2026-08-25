@@ -11,6 +11,7 @@ abstract class License(
     open val author: String,
     open val url: String? = null,
     open val kind: Kind = Kind.DEPENDENCY,
+    open val notice: String? = null,
 ) {
     /**
      * Distinguishes an actual code dependency ([Kind.DEPENDENCY], the default) from a bundled
@@ -67,7 +68,8 @@ abstract class License(
         val year: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val shortName: String get() = "MIT"
 
         override val licenseText: String
@@ -100,7 +102,8 @@ SOFTWARE."""
         val year: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val requiresAttribution: Boolean get() = false
 
         override val shortName: String get() = "MIT-0"
@@ -131,7 +134,8 @@ SOFTWARE."""
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val shortName: String get() = "Apache 1.1"
 
         override val licenseText: String = APACHE1_1_TEXT
@@ -193,7 +197,8 @@ information on the Apache Software Foundation, please see
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val shortName: String get() = "Apache 2.0"
 
         override val licenseText: String = APACHE2_TEXT
@@ -409,7 +414,8 @@ limitations under the License."""
         val year: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val shortName: String get() = "BSD-2-Clause"
 
         override val licenseText: String
@@ -445,7 +451,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."""
         val year: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val shortName: String get() = "BSD-3-Clause"
 
         override val licenseText: String
@@ -485,7 +492,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."""
         val year: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val shortName: String get() = "ISC"
 
         override val licenseText: String
@@ -511,7 +519,8 @@ PERFORMANCE OF THIS SOFTWARE."""
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val requiresAttribution: Boolean get() = false
 
         override val shortName: String get() = "Unlicense"
@@ -548,7 +557,8 @@ For more information, please refer to <https://unlicense.org>"""
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val requiresAttribution: Boolean get() = false
 
         override val shortName: String get() = "Public Domain"
@@ -565,7 +575,8 @@ $elementLicensed by $author has been dedicated to the public domain. To the exte
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val requiresAttribution: Boolean get() = false
 
         override val shortName: String get() = "US Gov Public Domain"
@@ -583,7 +594,8 @@ As a work of the United States Government, this content is not subject to copyri
         override val url: String? = null,
         val jurisdiction: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val requiresAttribution: Boolean get() = false
 
         override val shortName: String get() = "Public Domain (Expired)"
@@ -600,7 +612,8 @@ $elementLicensed by $author is in the public domain because its copyright protec
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val copyleftStrength get() = CopyleftStrength.STRONG
 
         override val shortName: String get() = "GPL-2.0"
@@ -618,7 +631,8 @@ Full license text: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html"""
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val copyleftStrength get() = CopyleftStrength.STRONG
 
         override val shortName: String get() = "GPL-3.0"
@@ -636,7 +650,8 @@ Full license text: https://www.gnu.org/licenses/gpl-3.0.html"""
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val copyleftStrength get() = CopyleftStrength.STRONG
 
         override val shortName: String get() = "AGPL-3.0"
@@ -654,7 +669,8 @@ Full license text: https://www.gnu.org/licenses/agpl-3.0.html"""
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val copyleftStrength get() = CopyleftStrength.WEAK
 
         override val shortName: String get() = "LGPL-2.1"
@@ -672,7 +688,8 @@ Full license text: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html"""
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val copyleftStrength get() = CopyleftStrength.WEAK
 
         override val shortName: String get() = "LGPL-3.0"
@@ -690,7 +707,8 @@ Full license text: https://www.gnu.org/licenses/lgpl-3.0.html"""
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val copyleftStrength get() = CopyleftStrength.WEAK
 
         override val shortName: String get() = "MPL-2.0"
@@ -708,7 +726,8 @@ Full license text: https://www.mozilla.org/en-US/MPL/2.0/"""
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val copyleftStrength get() = CopyleftStrength.WEAK
 
         override val shortName: String get() = "EPL-1.0"
@@ -726,7 +745,8 @@ Full license text: https://www.eclipse.org/legal/epl-v10.html"""
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val copyleftStrength get() = CopyleftStrength.WEAK
 
         override val shortName: String get() = "CDDL-1.0"
@@ -744,7 +764,8 @@ Full license text: https://opensource.org/licenses/CDDL-1.0"""
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val copyleftStrength get() = CopyleftStrength.WEAK
 
         override val shortName: String get() = "CDDL-1.1"
@@ -762,7 +783,8 @@ Full license text: https://spdx.org/licenses/CDDL-1.1.html"""
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val requiresAttribution: Boolean get() = false
 
         override val shortName: String get() = "CC0-1.0"
@@ -802,7 +824,8 @@ Full legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode"""
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val shortName: String get() = "CC ${variant.name.replace('_', '-')} ${version.label}"
 
         override val licenseText: String
@@ -835,7 +858,7 @@ $elementLicensed by $author is licensed under Creative Commons ${variant.display
 
 Under this license, you are free to:
 $permissions
-
+ 
 Under the following terms:
 ${conditions.joinToString("\n") { "- $it" }}
 
@@ -848,7 +871,8 @@ Full legal code: https://creativecommons.org/licenses/${variant.slug}/${version.
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val shortName: String get() = "OFL-1.1"
 
         override val licenseText: String = OFL_TEXT
@@ -954,7 +978,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE."""
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val shortName: String get() = "OGL v${version.label}"
 
         override val licenseText: String
@@ -998,7 +1023,8 @@ Full license text: https://www.nationalarchives.gov.uk/doc/open-government-licen
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val shortName: String get() = "ODbL-1.0"
 
         override val licenseText: String
@@ -1015,7 +1041,8 @@ Full legal code: https://opendatacommons.org/licenses/odbl/1-0/"""
         val year: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val requiresAttribution: Boolean get() = false
 
         override val shortName: String get() = "0BSD"
@@ -1035,7 +1062,8 @@ THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH RE
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val copyleftStrength get() = CopyleftStrength.WEAK
 
         override val shortName: String get() = "MPL-1.0"
@@ -1053,7 +1081,8 @@ Full license text: https://www.mozilla.org/MPL/1.0/"""
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val copyleftStrength get() = CopyleftStrength.WEAK
 
         override val shortName: String get() = "MPL-1.1"
@@ -1071,7 +1100,8 @@ Full license text: https://www.mozilla.org/MPL/1.1/"""
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val copyleftStrength get() = CopyleftStrength.WEAK
 
         override val shortName: String get() = "EPL-2.0"
@@ -1089,7 +1119,8 @@ Full license text: https://www.eclipse.org/legal/epl-2.0/"""
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val shortName: String get() = "EDL-1.0"
 
         override val licenseText: String = EDL1_TEXT
@@ -1116,7 +1147,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val shortName: String get() = "BSL-1.0"
 
         override val licenseText: String = BSL1_TEXT
@@ -1153,7 +1185,8 @@ DEALINGS IN THE SOFTWARE."""
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val shortName: String get() = "Zlib"
 
         override val licenseText: String
@@ -1175,7 +1208,8 @@ Permission is granted to anyone to use this software for any purpose, including 
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val shortName: String get() = "MS-PL"
 
         override val licenseText: String = MSPL_TEXT
@@ -1209,7 +1243,8 @@ A "contributor" is any person that distributes its contribution under this licen
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val copyleftStrength get() = CopyleftStrength.WEAK
 
         override val shortName: String get() = "MS-RL"
@@ -1245,7 +1280,8 @@ A "contributor" is any person that distributes its contribution under this licen
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val shortName: String get() = "Amazon Software License"
 
         override val licenseText: String = AMAZON_SOFTWARE_LICENSE_TEXT
@@ -1300,7 +1336,8 @@ EXCEPT AS PROHIBITED BY APPLICABLE LAW, IN NO EVENT AND UNDER NO LEGAL THEORY, W
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val shortName: String get() = "Embrace License"
 
         override val licenseText: String
@@ -1316,7 +1353,8 @@ Terms and software notices: https://embrace.io/docs/embrace-software-notice/"""
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val shortName: String get() = "Firebase Terms"
 
         override val licenseText: String
@@ -1332,7 +1370,8 @@ Terms of Service: https://firebase.google.com/terms/"""
         override val author: String,
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val shortName: String get() = "Android SDK License"
 
         override val licenseText: String
@@ -1351,7 +1390,8 @@ Terms and Conditions: https://developer.android.com/studio/terms.html"""
         override val url: String? = null,
         override val kind: Kind = Kind.DEPENDENCY,
         override val requiresAttribution: Boolean = true,
-    ) : License(elementLicensed, author, url, kind) {
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
         override val shortName: String get() = licenseName ?: "Custom"
 
         override val licenseText: String get() = text

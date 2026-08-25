@@ -38,6 +38,10 @@ class NoticeCopyingFunctionalTest {
         assertTrue(notices.exists())
         assertTrue(notices.readText().contains("This product includes software from Notice Lib."))
         assertTrue(notices.readText().contains("com.example:notice-lib:1.0"))
+
+        val generated = fixture.generatedLicensesFile()
+        assertTrue(generated.exists())
+        assertTrue(generated.readText().contains("notice = \"This product includes software from Notice Lib.\""))
     }
 
     @Test
@@ -56,5 +60,32 @@ class NoticeCopyingFunctionalTest {
 
         assertTrue(result.output.contains("BUILD SUCCESSFUL"), result.output)
         assertFalse(fixture.thirdPartyNoticesFile().exists())
+
+        // notice parameter is still populated in GeneratedLicenses.kt
+        val generated = fixture.generatedLicensesFile()
+        assertTrue(generated.exists())
+        assertTrue(generated.readText().contains("notice = \"This product includes software from Notice Lib.\""))
+    }
+
+    @Test
+    fun `noticesOutputFile configures the destination of THIRD-PARTY-NOTICES`() {
+        val repo = MavenFixtureRepo(File(projectDir, "repo"))
+        publishNoticeLib(repo)
+
+        val fixture = FixtureProject(projectDir, repo)
+        fixture.writeSettings()
+        fixture.writeBuildFile(
+            dependencyCoordinates = listOf("com.example:notice-lib:1.0"),
+            linkedLicenseBlock = "linkedLicense { noticesOutputFile = file(\"src/main/assets/custom-notices.txt\") }",
+        )
+
+        val result = fixture.run("generateLicenseCatalog")
+
+        assertTrue(result.output.contains("BUILD SUCCESSFUL"), result.output)
+        val customNotices = File(projectDir, "src/main/assets/custom-notices.txt")
+        assertTrue(customNotices.exists())
+        assertTrue(customNotices.readText().contains("This product includes software from Notice Lib."))
+        assertFalse(fixture.thirdPartyNoticesFile().exists())
     }
 }
+

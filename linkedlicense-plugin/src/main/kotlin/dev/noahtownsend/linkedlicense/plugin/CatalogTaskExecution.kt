@@ -128,6 +128,13 @@ internal object CatalogTaskExecution {
 
         val pomInfoCache = resolvePomInfo(project, componentIds) + extraPomInfo
 
+        val jarsByCoordinate = collectJarsByCoordinate(configurations)
+        val noticesByCoordinate = coordinates.associateWith { coordinate ->
+            val fromOverride = (overrides.overrides[coordinate.moduleId] as? OverrideSpec.BuiltIn)?.notice
+            val fromJar = jarsByCoordinate[coordinate]?.let { readNoticeFromJar(it) }?.let { stripLicenseBoilerplate(it) }?.takeIf { it.isNotBlank() }
+            fromOverride ?: fromJar
+        }
+
         val bestEffortFetch: ((String, String) -> KClass<out License>?)? =
             if (extension.bestEffortLicenseFetch) {
                 { repoUrl, ref -> BestEffortLicenseFetch.guessLicense(repoUrl, ref, ::fetchUrlBody) }
@@ -162,6 +169,7 @@ internal object CatalogTaskExecution {
                         "linkedlicense: unresolved property placeholder in POM <name> '$rawName' for ${coordinate.moduleId} — falling back to '${coordinate.artifact}'.",
                     )
                 },
+                noticeOf = { noticesByCoordinate[it] },
             )
 
         if (result.unresolved.isNotEmpty()) {
@@ -208,7 +216,7 @@ internal object CatalogTaskExecution {
         }
 
         if (extension.copyRequiredNotices) {
-            writeThirdPartyNotices(project, configurations, coordinates, overrides)
+            writeThirdPartyNotices(project, configurations, coordinates, overrides, extension.noticesOutputFile)
         }
 
         val sourceSetPackageSegment = sourceSetName.lowercase()
@@ -314,12 +322,7 @@ internal object CatalogTaskExecution {
         return finalPoms
     }
 
-    private fun writeThirdPartyNotices(
-        project: Project,
-        configurations: List<Configuration>,
-        coordinates: List<Coordinate>,
-        overrides: OverridesConfig,
-    ) {
+    private fun collectJarsByCoordinate(configurations: List<Configuration>): Map<Coordinate, File> {
         val jarsByCoordinate = mutableMapOf<Coordinate, File>()
         val artifactTypes = listOf(ArtifactTypeDefinition.JAR_TYPE, "aar")
 
@@ -349,12 +352,25 @@ internal object CatalogTaskExecution {
             }
         }
 
+        return jarsByCoordinate
+    }
+
+    private fun writeThirdPartyNotices(
+        project: Project,
+        configurations: List<Configuration>,
+        coordinates: List<Coordinate>,
+        overrides: OverridesConfig,
+        outputFile: File,
+    ) {
+        val jarsByCoordinate = collectJarsByCoordinate(configurations)
+
         val notices =
             coordinates
                 .filterNot { overrides.ignored.containsKey(it.moduleId) }
                 .mapNotNull { coordinate ->
-                    val jar = jarsByCoordinate[coordinate] ?: return@mapNotNull null
-                    val notice = readNoticeFromJar(jar) ?: return@mapNotNull null
+                    val overrideNotice = (overrides.overrides[coordinate.moduleId] as? OverrideSpec.BuiltIn)?.notice
+                    val jarNotice = jarsByCoordinate[coordinate]?.let { readNoticeFromJar(it) }
+                    val notice = overrideNotice ?: jarNotice ?: return@mapNotNull null
                     coordinate to notice
                 }
 
@@ -362,7 +378,8 @@ internal object CatalogTaskExecution {
             return
         }
 
-        File(project.projectDir, "THIRD-PARTY-NOTICES").writeText(renderThirdPartyNotices(notices))
+        outputFile.parentFile?.mkdirs()
+        outputFile.writeText(renderThirdPartyNotices(notices))
     }
 
     fun resolveVersionCatalogAlias(

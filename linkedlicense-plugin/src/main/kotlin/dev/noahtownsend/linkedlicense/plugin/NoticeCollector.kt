@@ -40,6 +40,48 @@ fun readNoticeFromJar(jarFile: File): String? {
     }.getOrNull()
 }
 
+/**
+ * Strips trailing license body boilerplate (e.g. the full Apache 2.0 terms and conditions
+ * appended at the end of a NOTICE file) while preserving genuine copyright and third-party
+ * attribution text.
+ */
+fun stripLicenseBoilerplate(rawNotice: String): String {
+    val trimmed = rawNotice.trim()
+    if (trimmed.isEmpty()) return ""
+
+    val boilerplateMarkers =
+        listOf(
+            Regex("""(?im)^\s*(?:[=\-*#~]{3,}\s*)?Apache License\s*,?\s*Version\s+2\.0.*$"""),
+            Regex("""(?im)^\s*(?:[=\-*#~]{3,}\s*)?TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION.*$"""),
+            Regex("""(?im)^\s*(?:[=\-*#~]{3,}\s*)?GNU (?:Lesser |Affero )?General Public License.*$"""),
+            Regex("""(?im)^\s*(?:[=\-*#~]{3,}\s*)?Mozilla Public License\s*,?\s*Version.*$"""),
+            Regex("""(?im)^\s*(?:[=\-*#~]{3,}\s*)?The MIT License\s*$"""),
+            Regex("""(?im)^\s*(?:[=\-*#~]{3,}\s*)?BSD \d-Clause License\s*$"""),
+        )
+
+    var earliestMatchStart = -1
+    for (marker in boilerplateMarkers) {
+        val match = marker.find(trimmed) ?: continue
+        val start = match.range.first
+        if (earliestMatchStart == -1 || start < earliestMatchStart) {
+            earliestMatchStart = start
+        }
+    }
+
+    if (earliestMatchStart == -1) {
+        return trimmed
+    }
+
+    var prefix = trimmed.substring(0, earliestMatchStart).trimEnd()
+
+    val separatorLineRegex = Regex("""\n\s*[=\-*#~_]{3,}\s*$""")
+    while (separatorLineRegex.containsMatchIn(prefix)) {
+        prefix = separatorLineRegex.replace(prefix, "").trimEnd()
+    }
+
+    return prefix
+}
+
 /** Renders the `THIRD-PARTY-NOTICES` file contents (README §3.4). */
 fun renderThirdPartyNotices(noticesByCoordinate: List<Pair<Coordinate, String>>): String =
     buildString {
@@ -47,10 +89,12 @@ fun renderThirdPartyNotices(noticesByCoordinate: List<Pair<Coordinate, String>>)
         appendLine("This file contains required notices for third-party dependencies bundled with this project.")
 
         noticesByCoordinate.forEach { (coordinate, notice) ->
+            val sanitized = stripLicenseBoilerplate(notice).ifBlank { notice.trim() }
             appendLine()
             appendLine("=".repeat(80))
             appendLine(coordinate.toString())
             appendLine("=".repeat(80))
-            appendLine(notice.trim())
+            appendLine(sanitized.trim())
         }
     }
+

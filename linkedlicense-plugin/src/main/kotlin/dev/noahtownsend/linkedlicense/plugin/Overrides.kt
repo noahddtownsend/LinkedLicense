@@ -16,6 +16,7 @@ sealed class OverrideSpec {
         val licenseName: String? = null,
         /** Explicit auto-populate toggle; when null, defers to the global extension setting. */
         val autoPopulate: Boolean? = null,
+        val notice: String? = null,
     ) : OverrideSpec()
 
     /** A `custom:fully.qualified.Symbol` reference — codegen emits an import + reference. */

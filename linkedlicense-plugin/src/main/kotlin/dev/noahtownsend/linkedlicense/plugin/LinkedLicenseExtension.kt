@@ -17,9 +17,24 @@ open class LinkedLicenseExtension(
 
     /**
      * Copies `NOTICE`/`NOTICE.txt` files found in resolved dependency artifacts into a
-     * generated `THIRD-PARTY-NOTICES` file at the project root. Default: `true`.
+     * generated `THIRD-PARTY-NOTICES` file. Default: `true`.
      */
     var copyRequiredNotices: Boolean = true
+
+    /**
+     * The output file where third-party notices are written when [copyRequiredNotices] is `true`.
+     * Defaults to `THIRD-PARTY-NOTICES` at the project root.
+     */
+    var noticesOutputFile: File = project.file("THIRD-PARTY-NOTICES")
+
+    /**
+     * Alias for [noticesOutputFile].
+     */
+    var thirdPartyNoticesFile: File
+        get() = noticesOutputFile
+        set(value) {
+            noticesOutputFile = value
+        }
 
     /**
      * Fails `generateLicenseCatalog` when a resolved dependency's license has

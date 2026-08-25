@@ -91,6 +91,23 @@ private fun LicenseRow(license: License) {
         }
 
         if (expanded) {
+            if (!license.notice.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = license.notice!!,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                shape = RoundedCornerShape(8.dp),
+                            ).padding(12.dp),
+                )
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(

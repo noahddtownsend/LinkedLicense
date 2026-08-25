@@ -68,6 +68,8 @@ object CatalogGenerator {
         autoPopulate: Boolean = true,
         /** Invoked when an unresolvable ${...} placeholder is found in POM metadata and fell back (Bug 6). */
         onUnresolvedPlaceholder: (Coordinate, String) -> Unit = { _, _ -> },
+        /** Provides extracted notice text for a dependency coordinate, if available. */
+        noticeOf: (Coordinate) -> String? = { null },
     ): CatalogResult {
         val entries = mutableListOf<Pair<Coordinate, CatalogEntry>>()
         val unresolved = mutableListOf<Coordinate>()
@@ -177,6 +179,8 @@ object CatalogGenerator {
                         overrideSpec.url
                             ?: if (effectiveAutoPopulate) pomInfo.licenses.firstOrNull { it.url != null }?.url ?: pomInfo.scmUrl else null
 
+                    val resolvedNotice = overrideSpec.notice ?: noticeOf(coordinate)
+
                     entries +=
                         coordinate to
                         CatalogEntry.BuiltIn(
@@ -187,6 +191,7 @@ object CatalogGenerator {
                                 url = resolvedUrl,
                                 text = overrideSpec.text,
                                 licenseName = overrideSpec.licenseName,
+                                notice = resolvedNotice,
                             ),
                         )
                 }
@@ -236,6 +241,8 @@ object CatalogGenerator {
                     val resolvedUrl =
                         if (autoPopulate) pomInfo.licenses.firstOrNull { it.url != null }?.url ?: pomInfo.scmUrl else null
 
+                    val resolvedNotice = noticeOf(coordinate)
+
                     entries +=
                         coordinate to
                         CatalogEntry.BuiltIn(
@@ -245,6 +252,7 @@ object CatalogGenerator {
                                 author = resolvedAuthor,
                                 url = resolvedUrl,
                                 text = null,
+                                notice = resolvedNotice,
                             ),
                         )
                 }
@@ -297,6 +305,7 @@ object CatalogGenerator {
                                 text = spec.text,
                                 isAsset = true,
                                 licenseName = spec.licenseName,
+                                notice = spec.notice,
                             ),
                         )
                 }

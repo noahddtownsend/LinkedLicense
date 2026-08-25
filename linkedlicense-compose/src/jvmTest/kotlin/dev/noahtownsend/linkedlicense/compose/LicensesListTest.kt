@@ -42,4 +42,29 @@ class LicensesListTest {
 
             onNodeWithText("MIT License", substring = true).assertExists()
         }
+
+    @Test
+    fun `LicensesList expands a row with notice to show both notice and licenseText`() =
+        runComposeUiTest {
+            val noticeText = "Copyright 2016-2024 JetBrains s.r.o and contributors"
+            val licensesWithNotice =
+                listOf(
+                    License.Apache2(
+                        elementLicensed = "Futures Kotlin Extensions",
+                        author = "The Android Open Source Project",
+                        notice = noticeText,
+                    ),
+                )
+
+            setContent {
+                MaterialTheme {
+                    LicensesList(licenses = licensesWithNotice)
+                }
+            }
+
+            onNodeWithText("Futures Kotlin Extensions").performClick()
+
+            onNodeWithText(noticeText).assertExists()
+            onNodeWithText("Apache License", substring = true).assertExists()
+        }
 }

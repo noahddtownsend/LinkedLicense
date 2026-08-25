@@ -83,6 +83,7 @@ abstract class License(
     open val author: String,
     open val url: String? = null,
     open val kind: Kind = Kind.DEPENDENCY,
+    open val notice: String? = null,
 ) {
     abstract val licenseText: String
     open val copyleftStrength: CopyleftStrength get() = CopyleftStrength.NONE
@@ -107,6 +108,13 @@ Most licenses (MIT, Apache 2.0, BSD, GPL, etc.) require attribution (`true`), wh
 public-domain or zero-attribution licenses (0BSD, MIT-0, CC0, Unlicense, Public Domain) waive
 this requirement (`false`). Consuming software can use this property to filter or distinguish
 mandatory declarations from optional/no-attribution entries.
+
+`notice` exposes artifact-level third-party attribution and copyright notices (e.g. extracted
+from `META-INF/NOTICE` or `NOTICE.txt`). This allows satisfying distribution notice obligations
+within in-app display screens (e.g. in Compose via `dev.noahtownsend:linkedlicense-compose`) as
+permitted under Apache-2.0 §4(d). The Gradle plugin automatically populates this field during
+dependency scanning (stripping trailing duplicate license text boilerplate while retaining genuine
+third-party attribution), and it can also be explicitly supplied via `[overrides]` or `[assets]`.
 
 `kind` distinguishes an actual code dependency (the default) from a bundled non-dependency
 asset — a dataset, image, font, or similar — that carries its own license/attribution but
@@ -366,12 +374,14 @@ with its ecosystem, in the *same* `[overrides]`/`[ignored]`/`[copyleft-allowed]`
 
 ```kotlin
 linkedLicense {
-    overridesFile = file("linkedlicense.toml") // default shown
-    copyRequiredNotices = true                 // default shown
-    failOnCopyleft = true                      // default shown, see §3.5
-    failOnSoftCopyleft = null                  // default shown, see §3.5 — null follows failOnCopyleft
-    failOnUnknown = true                       // default shown
-    bestEffortLicenseFetch = false             // default shown, see §2.3
+    overridesFile = file("linkedlicense.toml")           // default shown
+    copyRequiredNotices = true                           // default shown
+    noticesOutputFile = file("THIRD-PARTY-NOTICES")      // default shown, see §3.4
+    failOnCopyleft = true                                // default shown, see §3.5
+    failOnSoftCopyleft = null                            // default shown, see §3.5 — null follows failOnCopyleft
+    failOnUnknown = true                                 // default shown
+    bestEffortLicenseFetch = false                       // default shown, see §2.3
+    autoPopulate = true                                  // default shown, see §3.1
 }
 ```
 
@@ -383,6 +393,7 @@ Overrides live in their own version-catalog-shaped TOML file.
 [overrides]
 "com.mapbox.maps:android" = { license = "Custom", elementLicensed = "Mapbox Maps", author = "Mapbox", text = "...", licenseName = "Mapbox ToS" }
 "libs.okio" = { license = "Apache2" } # resolved via the version catalog, see 3.2
+"androidx.concurrent:concurrent-futures-ktx" = { notice = "Copyright 2016-2024 JetBrains s.r.o and contributors" }
 
 [ignored]
 "com.example:internal-tool" = "Vendored fork, not redistributed; excluded from the catalog."
@@ -399,7 +410,7 @@ block = ["Gpl3"]
   [custom one](#4-custom-licenses-in-code), via a `custom:` reference) — for POMs with no
   `<licenses>` block, an ambiguous/wrong block, or dependencies that aren't Maven artifacts
   at all (vendor terms, government open-data licenses, bundled fonts).
-  You can also override specific fields (e.g. `author = "..."`, `elementLicensed = "..."`, `url = "..."`)
+  You can also override specific fields (e.g. `author = "..."`, `elementLicensed = "..."`, `url = "..."`, `notice = "..."`)
   without specifying a `license` key — the plugin will auto-match the license from the POM / repo
   while applying your field overrides. Non-overridden fields are automatically populated from POM
   metadata and best-effort fallbacks by default (can be disabled via `autoPopulate = false` per entry
@@ -467,17 +478,25 @@ omitted (not recommended — you lose the guarantee that every shipped dependenc
 accounted for). This is separate from `-x generateLicenseCatalog`, which skips the whole
 task rather than relaxing this one check.
 
-### 3.4 Required-notice copying (on by default)
+### 3.4 Required-notice copying & in-app NOTICE rendering
 
 Some licenses obligate you to carry forward specific notice text on redistribution, beyond
-just reproducing the license body — Apache 2.0's `NOTICE` file clause is the common case
-(also e.g. BSD-3-Clause's non-endorsement notice, MPL's file-level notices). For every
-resolved dependency that ships a `NOTICE`/`NOTICE.txt` file in its artifact, that file's
-contents are copied into a generated `THIRD-PARTY-NOTICES` file at your project root.
+just reproducing the license body — Apache 2.0 §4(d) is the common case (also e.g. BSD-3-Clause's
+non-endorsement notice, MPL's file-level notices).
 
-Set `copyRequiredNotices = false` to opt out. This is independent of the copyleft guard
-below — most Apache-licensed (permissive) dependencies carry a NOTICE obligation without
-being copyleft.
+The plugin automatically extracts `NOTICE`/`NOTICE.txt` files (under root or `META-INF/`) from
+resolved dependency jars/aars and surfaces them in two ways:
+
+1. **In-code on `License.notice`**: Extracted notice text is passed directly to `GeneratedLicenses.kt`
+   (with trailing duplicate license text bodies stripped, preserving genuine copyright and third-party
+   attribution), where it is available at runtime and rendered in Compose UI via `dev.noahtownsend:linkedlicense-compose`.
+2. **As a flat file**: Copies notices into `noticesOutputFile` (default `THIRD-PARTY-NOTICES` at the
+   project root). You can change this destination (e.g. `noticesOutputFile = file("src/main/assets/notices.txt")`)
+   or disable flat-file generation via `copyRequiredNotices = false`.
+
+Set `copyRequiredNotices = false` to skip writing the flat file (the `License.notice` runtime property
+will still be populated). This is independent of the copyleft guard below — most Apache-licensed (permissive)
+dependencies carry a NOTICE obligation without being copyleft.
 
 ### 3.5 Copyleft guard (on by default)
 

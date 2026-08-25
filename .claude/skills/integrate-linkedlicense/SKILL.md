@@ -12,7 +12,7 @@ project's files, not this one, unless the user is explicitly working on LinkedLi
 itself.
 
 Current published version: check `build.gradle.kts` in this repo (`version = "..."`) for
-the latest — as of writing it's `0.9.3`. Prefer asking the user which version to pin, or
+the latest — as of writing it's `0.9.4`. Prefer asking the user which version to pin, or
 using the newest tag/release if you can check Maven Central, rather than guessing.
 
 ## Step 1 — Establish scope with the user
