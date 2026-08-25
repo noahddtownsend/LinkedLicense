@@ -99,6 +99,109 @@ class AndroidPluginFunctionalTest {
     }
 
     @Test
+    fun `android application with product flavors and subproject dependency succeeds with NOTICE copying`() {
+        val repo = MavenFixtureRepo(File(projectDir, "repo"))
+        repo.publish(
+            group = "com.example",
+            artifact = "notice-lib",
+            version = "1.0",
+            licenseName = "Apache-2.0",
+            noticeText = "Notice Lib Copyright 2026 Example Corp.",
+        )
+
+        val appDir = File(projectDir, "app")
+        val userManagementDir = File(projectDir, "usermanagement")
+        appDir.mkdirs()
+        userManagementDir.mkdirs()
+
+        File(projectDir, "settings.gradle.kts").writeText(
+            """
+            rootProject.name = "fixture"
+            include(":app")
+            include(":usermanagement")
+            pluginManagement {
+                repositories {
+                    google()
+                    gradlePluginPortal()
+                    mavenCentral()
+                }
+            }
+            """.trimIndent(),
+        )
+
+        File(projectDir, "local.properties").writeText("sdk.dir=/Users/noahtownsend/Library/Android/sdk\n")
+
+        val functionalTestRepoDir = System.getProperty("linkedlicense.functionalTestRepo")
+
+        File(userManagementDir, "build.gradle.kts").writeText(
+            """
+            import java.net.URI
+
+            plugins {
+                id("com.android.library") version "8.13.2"
+                id("org.jetbrains.kotlin.android") version "2.3.21"
+            }
+
+            repositories {
+                google()
+                mavenCentral()
+            }
+
+            android {
+                namespace = "com.example.usermanagement"
+                compileSdk = 34
+                defaultConfig { minSdk = 24 }
+            }
+            """.trimIndent(),
+        )
+
+        File(appDir, "build.gradle.kts").writeText(
+            """
+            import java.net.URI
+
+            plugins {
+                id("com.android.application") version "8.13.2"
+                id("org.jetbrains.kotlin.android") version "2.3.21"
+                id("dev.noahtownsend.linkedlicense")
+            }
+
+            repositories {
+                google()
+                maven { url = URI.create("${repo.dir.toURI()}") }
+                ${if (functionalTestRepoDir != null) "maven { url = URI.create(\"${File(functionalTestRepoDir).toURI()}\") }" else ""}
+                mavenCentral()
+            }
+
+            android {
+                namespace = "com.example.app"
+                compileSdk = 34
+                defaultConfig { minSdk = 24 }
+                flavorDimensions += "env"
+                productFlavors {
+                    create("dev") { dimension = "env" }
+                    create("beta") { dimension = "env" }
+                }
+            }
+
+            dependencies {
+                implementation(project(":usermanagement"))
+                implementation("com.example:notice-lib:1.0")
+            }
+            """.trimIndent(),
+        )
+
+        val fixture = FixtureProject(projectDir, repo)
+        val result = fixture.run(":app:generateDevDebugLicenseCatalog")
+
+        assertTrue(result.output.contains("BUILD SUCCESSFUL"), result.output)
+        val notices = File(appDir, "THIRD-PARTY-NOTICES")
+        assertTrue(notices.exists(), "Expected THIRD-PARTY-NOTICES to exist")
+        assertTrue(notices.readText().contains("Notice Lib Copyright 2026 Example Corp."))
+        assertTrue(notices.readText().contains("com.example:notice-lib:1.0"))
+        assertFalse(notices.readText().contains(":usermanagement"))
+    }
+
+    @Test
     fun `applying plugin to project without jvm, multiplatform, or android kotlin plugins fails loudly`() {
         val repo = MavenFixtureRepo(File(projectDir, "repo"))
         val fixture = FixtureProject(projectDir, repo)

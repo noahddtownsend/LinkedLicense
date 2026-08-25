@@ -80,6 +80,10 @@ object LicenseTextMatcher {
                 listOf(
                     "mit no attribution",
                 ),
+            License.Bsd0Clause::class to
+                listOf(
+                    "bsd zero clause license",
+                ),
             License.MIT::class to
                 listOf(
                     "permission is hereby granted, free of charge, to any person obtaining a copy",
@@ -137,12 +141,65 @@ object LicenseTextMatcher {
                 ),
             License.Mpl2::class to
                 listOf(
-                    "mozilla public license, v. 2.0",
+                    "mozilla public license",
+                    "2 0",
+                ),
+            License.Mpl1_1::class to
+                listOf(
+                    "mozilla public license",
+                    "1 1",
+                ),
+            License.Mpl1::class to
+                listOf(
+                    "mozilla public license",
+                ),
+            License.Epl2::class to
+                listOf(
+                    "eclipse public license",
+                    "2 0",
                 ),
             License.Epl1::class to
                 listOf(
                     "eclipse public license",
-                    "the accompanying program is provided under the terms of this eclipse public license",
+                ),
+            License.Edl1::class to
+                listOf(
+                    "eclipse distribution license",
+                ),
+            License.Bsl1::class to
+                listOf(
+                    "boost software license",
+                    "version 1.0",
+                ),
+            License.Zlib::class to
+                listOf(
+                    "this software is provided 'as-is', without any express or implied warranty",
+                    "altered source versions must be plainly marked as such",
+                ),
+            License.MsPl::class to
+                listOf(
+                    "microsoft public license",
+                ),
+            License.MsRl::class to
+                listOf(
+                    "microsoft reciprocal license",
+                ),
+            License.AmazonSoftwareLicense::class to
+                listOf(
+                    "amazon software license",
+                    "use limitation",
+                ),
+            License.Embrace::class to
+                listOf(
+                    "embrace software notice",
+                ),
+            License.Firebase::class to
+                listOf(
+                    "firebase software development kit terms",
+                ),
+            License.AndroidSdk::class to
+                listOf(
+                    "android software development kit license agreement",
                 ),
             License.Cddl1_1::class to
                 listOf(

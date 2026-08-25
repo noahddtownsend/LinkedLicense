@@ -5,7 +5,9 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedArtifactResult
+import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.maven.MavenModule
 import org.gradle.maven.MavenPomArtifact
 import dev.noahtownsend.linkedlicense.License
@@ -314,11 +316,31 @@ internal object CatalogTaskExecution {
         overrides: OverridesConfig,
     ) {
         val jarsByCoordinate = mutableMapOf<Coordinate, File>()
+        val artifactTypes = listOf(ArtifactTypeDefinition.JAR_TYPE, "aar")
 
         configurations.forEach { configuration ->
-            configuration.resolvedConfiguration.resolvedArtifacts.forEach { artifact ->
-                val id = artifact.moduleVersion.id
-                jarsByCoordinate.putIfAbsent(Coordinate(id.group, id.name, id.version), artifact.file)
+            for (artifactType in artifactTypes) {
+                val view =
+                    configuration.incoming.artifactView { viewConfig ->
+                        viewConfig.lenient(true)
+                        viewConfig.attributes { container ->
+                            container.attribute(
+                                ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
+                                artifactType,
+                            )
+                        }
+                    }
+
+                view.artifacts.artifacts.forEach { artifact ->
+                    val id = artifact.id.componentIdentifier
+                    if (id is ProjectComponentIdentifier) {
+                        return@forEach
+                    }
+                    if (id is ModuleComponentIdentifier) {
+                        val coordinate = Coordinate(id.group, id.module, id.version)
+                        jarsByCoordinate.putIfAbsent(coordinate, artifact.file)
+                    }
+                }
             }
         }
 

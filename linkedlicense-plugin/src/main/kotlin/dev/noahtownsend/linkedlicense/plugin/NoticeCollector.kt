@@ -3,9 +3,14 @@ package dev.noahtownsend.linkedlicense.plugin
 import java.io.File
 import java.util.zip.ZipFile
 
-/** Reads a `NOTICE`/`NOTICE.txt` entry (root, or under `META-INF/`) out of a jar, if present. */
+/** Reads a `NOTICE`/`NOTICE.txt` entry (root, or under `META-INF/`) out of a jar or aar, if present. */
 fun readNoticeFromJar(jarFile: File): String? {
-    if (!jarFile.exists() || !jarFile.name.endsWith(".jar")) {
+    if (!jarFile.exists()) {
+        return null
+    }
+
+    val name = jarFile.name.lowercase()
+    if (!name.endsWith(".jar") && !name.endsWith(".aar")) {
         return null
     }
 
@@ -13,8 +18,24 @@ fun readNoticeFromJar(jarFile: File): String? {
 
     return runCatching {
         ZipFile(jarFile).use { zip ->
-            val entry = candidateNames.firstNotNullOfOrNull { zip.getEntry(it) } ?: return@use null
-            zip.getInputStream(entry).bufferedReader().readText()
+            val entry = candidateNames.firstNotNullOfOrNull { zip.getEntry(it) }
+            if (entry != null) {
+                return@use zip.getInputStream(entry).bufferedReader().readText()
+            }
+            if (name.endsWith(".aar")) {
+                val classesJarEntry = zip.getEntry("classes.jar")
+                if (classesJarEntry != null) {
+                    val tempFile = File.createTempFile("classes", ".jar")
+                    try {
+                        zip.getInputStream(classesJarEntry).use { input ->
+                            tempFile.outputStream().use { out -> input.copyTo(out) }
+                        }
+                        readNoticeFromJar(tempFile)
+                    } finally {
+                        tempFile.delete()
+                    }
+                } else null
+            } else null
         }
     }.getOrNull()
 }

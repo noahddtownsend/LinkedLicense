@@ -138,6 +138,90 @@ class LicenseTextMatcherTest {
     }
 
     @Test
+    fun `match() recognizes 0BSD license text`() {
+        val text =
+            """
+            BSD Zero Clause License
+
+            Copyright (C) 2024 Jane Doe
+
+            Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted.
+            """.trimIndent()
+
+        assertEquals(License.Bsd0Clause::class, LicenseTextMatcher.match(text))
+    }
+
+    @Test
+    fun `match() recognizes MPL 1_1 and MPL 1_0 text`() {
+        val mpl1_1 = "Mozilla Public License Version 1.1\n1. Definitions..."
+        val mpl1_0 = "Mozilla Public License Version 1.0\n1. Definitions..."
+
+        assertEquals(License.Mpl1_1::class, LicenseTextMatcher.match(mpl1_1))
+        assertEquals(License.Mpl1::class, LicenseTextMatcher.match(mpl1_0))
+    }
+
+    @Test
+    fun `match() recognizes EPL 2_0 text`() {
+        val text = "Eclipse Public License - v 2.0\nTHE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS..."
+
+        assertEquals(License.Epl2::class, LicenseTextMatcher.match(text))
+    }
+
+    @Test
+    fun `match() recognizes EDL 1_0 text`() {
+        val text = "Eclipse Distribution License - v 1.0\nCopyright (c) 2007, Eclipse Foundation, Inc."
+
+        assertEquals(License.Edl1::class, LicenseTextMatcher.match(text))
+    }
+
+    @Test
+    fun `match() recognizes Boost Software License text`() {
+        val text = "Boost Software License - Version 1.0 - August 17th, 2003\nPermission is hereby granted..."
+
+        assertEquals(License.Bsl1::class, LicenseTextMatcher.match(text))
+    }
+
+    @Test
+    fun `match() recognizes Zlib license text`() {
+        val text = "This software is provided 'as-is', without any express or implied warranty.\n" +
+            "Altered source versions must be plainly marked as such..."
+
+        assertEquals(License.Zlib::class, LicenseTextMatcher.match(text))
+    }
+
+    @Test
+    fun `match() recognizes MS-PL and MS-RL text`() {
+        val msPl = "Microsoft Public License (MS-PL)\nThis license governs use of the accompanying software..."
+        val msRl = "Microsoft Reciprocal License (MS-RL)\nThis license governs use of the accompanying software..."
+
+        assertEquals(License.MsPl::class, LicenseTextMatcher.match(msPl))
+        assertEquals(License.MsRl::class, LicenseTextMatcher.match(msRl))
+    }
+
+    @Test
+    fun `match() recognizes Amazon Software License text`() {
+        val text = "Amazon Software License\n1. Definitions...\n3.3 Use Limitation. The Work and any derivative works..."
+
+        assertEquals(License.AmazonSoftwareLicense::class, LicenseTextMatcher.match(text))
+    }
+
+    @Test
+    fun `match() recognizes Embrace license text`() {
+        val text = "Embrace Software Notice\nTerms and conditions for Embrace Android SDK"
+
+        assertEquals(License.Embrace::class, LicenseTextMatcher.match(text))
+    }
+
+    @Test
+    fun `match() recognizes Firebase and Android SDK text`() {
+        val firebase = "Firebase Software Development Kit Terms\nhttps://firebase.google.com/terms/"
+        val androidSdk = "Android Software Development Kit License Agreement\nhttps://developer.android.com/studio/terms.html"
+
+        assertEquals(License.Firebase::class, LicenseTextMatcher.match(firebase))
+        assertEquals(License.AndroidSdk::class, LicenseTextMatcher.match(androidSdk))
+    }
+
+    @Test
     fun `match() returns null for unrecognized text`() {
         assertNull(LicenseTextMatcher.match("This is a completely bespoke internal license agreement."))
     }

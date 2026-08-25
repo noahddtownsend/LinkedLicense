@@ -987,6 +987,338 @@ $elementLicensed by $author is licensed under the Open Data Commons Open Databas
 Full legal code: https://opendatacommons.org/licenses/odbl/1-0/"""
     }
 
+    data class Bsd0Clause(
+        override val elementLicensed: String,
+        override val author: String,
+        val year: String,
+        override val url: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val shortName: String get() = "0BSD"
+
+        override val licenseText: String
+            get() = """BSD Zero Clause License
+
+Copyright (C) $year by $author
+
+Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE."""
+    }
+
+    data class Mpl1(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val copyleftStrength get() = CopyleftStrength.WEAK
+
+        override val shortName: String get() = "MPL-1.0"
+
+        override val licenseText: String
+            get() = """Mozilla Public License, Version 1.0 (MPL-1.0)
+
+$elementLicensed by $author is licensed under the Mozilla Public License, Version 1.0. This is a file-level weak-copyleft license: modifications to MPL-licensed source files must themselves be made available under the MPL, but the covered software may be combined with proprietary or differently-licensed code in a larger work without that larger work being placed under the MPL.${if (url != null) "\nSource / URL: $url" else ""}
+
+Full license text: https://www.mozilla.org/MPL/1.0/"""
+    }
+
+    data class Mpl1_1(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val copyleftStrength get() = CopyleftStrength.WEAK
+
+        override val shortName: String get() = "MPL-1.1"
+
+        override val licenseText: String
+            get() = """Mozilla Public License, Version 1.1 (MPL-1.1)
+
+$elementLicensed by $author is licensed under the Mozilla Public License, Version 1.1. This is a file-level weak-copyleft license: modifications to MPL-licensed source files must themselves be made available under the MPL, but the covered software may be combined with proprietary or differently-licensed code in a larger work without that larger work being placed under the MPL.${if (url != null) "\nSource / URL: $url" else ""}
+
+Full license text: https://www.mozilla.org/MPL/1.1/"""
+    }
+
+    data class Epl2(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val copyleftStrength get() = CopyleftStrength.WEAK
+
+        override val shortName: String get() = "EPL-2.0"
+
+        override val licenseText: String
+            get() = """Eclipse Public License, Version 2.0 (EPL-2.0)
+
+$elementLicensed by $author is licensed under the Eclipse Public License, Version 2.0. This is a weak-copyleft license: modifications to EPL-licensed source code must be made available under the EPL, but you may combine the program with other software (including proprietary software) into a larger work without placing the larger work under the EPL.${if (url != null) "\nSource / URL: $url" else ""}
+
+Full license text: https://www.eclipse.org/legal/epl-2.0/"""
+    }
+
+    data class Edl1(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val shortName: String get() = "EDL-1.0"
+
+        override val licenseText: String = EDL1_TEXT
+
+        companion object {
+            private const val EDL1_TEXT = """Eclipse Distribution License - v 1.0
+
+Copyright (c) 2007, Eclipse Foundation, Inc. and its licensors.
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+    * Neither the name of the Eclipse Foundation, Inc. nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."""
+        }
+    }
+
+    data class Bsl1(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val shortName: String get() = "BSL-1.0"
+
+        override val licenseText: String = BSL1_TEXT
+
+        companion object {
+            private const val BSL1_TEXT = """Boost Software License - Version 1.0 - August 17th, 2003
+
+Permission is hereby granted, free of charge, to any person or organization
+obtaining a copy of the software and accompanying documentation covered by
+this license (the "Software") to use, reproduce, display, distribute,
+execute, and transmit the Software, and to prepare derivative works of the
+Software, and to permit third-parties to whom the Software is furnished to
+do so, all subject to the following:
+
+The copyright notices in the Software and this entire statement, including
+the above license grant, this restriction and the following disclaimer,
+must be included in all copies of the Software, in whole or in part, and
+all derivative works of the Software, unless such copies or derivative
+works are solely in the form of machine-executable object code generated by
+a source language processor.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT
+SHALL THE COPYRIGHT HOLDERS OR ANYONE DISTRIBUTING THE SOFTWARE BE LIABLE
+FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE."""
+        }
+    }
+
+    data class Zlib(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val shortName: String get() = "Zlib"
+
+        override val licenseText: String
+            get() = """zlib License
+
+$elementLicensed by $author is licensed under the zlib/libpng License.${if (url != null) "\nSource / URL: $url" else ""}
+
+This software is provided 'as-is', without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose, including commercial applications, and to alter it and redistribute it freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment in the product documentation would be appreciated but is not required.
+2. Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.
+3. This notice may not be removed or altered from any source distribution."""
+    }
+
+    data class MsPl(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val shortName: String get() = "MS-PL"
+
+        override val licenseText: String = MSPL_TEXT
+
+        companion object {
+            private const val MSPL_TEXT = """Microsoft Public License (MS-PL)
+
+This license governs use of the accompanying software. If you use the software, you accept this license. If you do not accept the license, do not use the software.
+
+1. Definitions
+The terms "reproduce," "reproduction," "derivative works," and "distribution" have the same meaning here as under U.S. copyright law.
+A "contribution" is the original software, or any additions or changes to the software.
+A "contributor" is any person that distributes its contribution under this license.
+"Licensed patents" are a contributor's patent claims that read directly on its contribution.
+
+2. Grant of Rights
+(A) Copyright Grant- Subject to the terms of this license, including the license conditions and limitations in section 3, each contributor grants you a non-exclusive, worldwide, royalty-free copyright license to reproduce its contribution, prepare derivative works of its contribution, and distribute its contribution or any derivative works that you create.
+(B) Patent Grant- Subject to the terms of this license, including the license conditions and limitations in section 3, each contributor grants you a non-exclusive, worldwide, royalty-free license under its licensed patents to make, have made, use, sell, offer for sale, import, and/or otherwise dispose of its contribution in the software or derivative works of the contribution in the software.
+
+3. Conditions and Limitations
+(A) No Trademark License- This license does not grant you rights to use any contributors' name, logo, or trademarks.
+(B) If you bring a patent claim against any contributor over patents that you claim are infringed by the software, your patent license from such contributor to the software ends automatically.
+(C) If you distribute any portion of the software, you must retain all copyright, patent, trademark, and attribution notices that are present in the software.
+(D) If you distribute any portion of the software in source code form, you may do so only under this license by including a complete copy of this license with your distribution. If you distribute any portion of the software in compiled or object code form, you may only do so under a license that complies with this license.
+(E) The software is licensed "as-is." You bear the risk of using it. The contributors give no express warranties, guarantees or conditions. You may have additional consumer rights under your local laws which this license cannot change. To the extent permitted under your local laws, the contributors exclude the implied warranties of merchantability, fitness for a particular purpose and non-infringement."""
+        }
+    }
+
+    data class MsRl(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val copyleftStrength get() = CopyleftStrength.WEAK
+
+        override val shortName: String get() = "MS-RL"
+
+        override val licenseText: String = MSRL_TEXT
+
+        companion object {
+            private const val MSRL_TEXT = """Microsoft Reciprocal License (MS-RL)
+
+This license governs use of the accompanying software. If you use the software, you accept this license. If you do not accept the license, do not use the software.
+
+1. Definitions
+The terms "reproduce," "reproduction," "derivative works," and "distribution" have the same meaning here as under U.S. copyright law.
+A "contribution" is the original software, or any additions or changes to the software.
+A "contributor" is any person that distributes its contribution under this license.
+"Licensed patents" are a contributor's patent claims that read directly on its contribution.
+
+2. Grant of Rights
+(A) Copyright Grant- Subject to the terms of this license, including the license conditions and limitations in section 3, each contributor grants you a non-exclusive, worldwide, royalty-free copyright license to reproduce its contribution, prepare derivative works of its contribution, and distribute its contribution or any derivative works that you create.
+(B) Patent Grant- Subject to the terms of this license, including the license conditions and limitations in section 3, each contributor grants you a non-exclusive, worldwide, royalty-free license under its licensed patents to make, have made, use, sell, offer for sale, import, and/or otherwise dispose of its contribution in the software or derivative works of the contribution in the software.
+
+3. Conditions and Limitations
+(A) No Trademark License- This license does not grant you rights to use any contributors' name, logo, or trademarks.
+(B) If you bring a patent claim against any contributor over patents that you claim are infringed by the software, your patent license from such contributor to the software ends automatically.
+(C) If you distribute any portion of the software, you must retain all copyright, patent, trademark, and attribution notices that are present in the software.
+(D) Base License Grant- For any code you distribute, including the software and any derivative works, that you distribute, you may do so only under this license by including a complete copy of this license with your distribution.
+(E) The software is licensed "as-is." You bear the risk of using it. The contributors give no express warranties, guarantees or conditions. You may have additional consumer rights under your local laws which this license cannot change. To the extent permitted under your local laws, the contributors exclude the implied warranties of merchantability, fitness for a particular purpose and non-infringement."""
+        }
+    }
+
+    data class AmazonSoftwareLicense(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val shortName: String get() = "Amazon Software License"
+
+        override val licenseText: String = AMAZON_SOFTWARE_LICENSE_TEXT
+
+        companion object {
+            private const val AMAZON_SOFTWARE_LICENSE_TEXT = """Amazon Software License
+
+1. Definitions
+
+“Licensor” means any person or entity that distributes its Work.
+
+“Software” means the original work of authorship made available under this License.
+
+“Work” means the Software and any additions to or derivative works of the Software that are made available under this License.
+
+The terms “reproduce,” “reproduction,” “derivative works,” and “distribution” have the meaning as provided under U.S. copyright law; provided, however, that for the purposes of this License, derivative works shall not include works that remain separable from, or merely link (or bind by name) to the interfaces of, the Work.
+
+Works, including the Software, are “made available” under this License by including in or with the Work either (a) a copyright notice referencing the applicability of this License to the Work, or (b) a copy of this License.
+
+2. License Grants
+
+2.1 Copyright Grant. Subject to the terms and conditions of this License, each Licensor grants to you a perpetual, worldwide, non-exclusive, royalty-free, copyright license to reproduce, prepare derivative works of, publicly display, publicly perform, sublicense and distribute its Work and any resulting derivative works in any form.
+
+2.2 Patent Grant. Subject to the terms and conditions of this License, each Licensor grants to you a perpetual, worldwide, non-exclusive, royalty-free patent license to make, have made, use, sell, offer for sale, import, and otherwise transfer its Work, in whole or in part. The foregoing license applies only to the patent claims licensable by Licensor that would be infringed by Licensor’s Work (or portion thereof) individually and excluding any combinations with any other materials or technology.
+
+3. Limitations
+
+3.1 Redistribution. You may reproduce or distribute the Work only if (a) you do so under this License, (b) you include a complete copy of this License with your distribution, and (c) you retain without modification any copyright, patent, trademark, or attribution notices that are present in the Work.
+
+3.2 Derivative Works. You may specify that additional or different terms apply to the use, reproduction, and distribution of your derivative works of the Work (“Your Terms”) only if (a) Your Terms provide that the use limitation in Section 3.3 applies to your derivative works, and (b) you identify the specific derivative works that are subject to Your Terms. Notwithstanding Your Terms, this License (including the redistribution requirements in Section 3.1) will continue to apply to the Work itself.
+
+3.3 Use Limitation. The Work and any derivative works thereof only may be used or intended for use with the web services, computing platforms or applications provided by Amazon.com, Inc. or its affiliates, including Amazon Web Services, Inc.
+
+3.4 Patent Claims. If you bring or threaten to bring a patent claim against any Licensor (including any claim, cross-claim or counterclaim in a lawsuit) to enforce any patents that you allege are infringed by any Work, then your rights under this License from such Licensor (including the grants in Sections 2.1 and 2.2) will terminate immediately.
+
+3.5 Trademarks. This License does not grant any rights to use any Licensor’s or its affiliates’ names, logos, or trademarks, except as necessary to reproduce the notices described in this License.
+
+3.6 Termination. If you violate any term of this License, then your rights under this License (including the grants in Sections 2.1 and 2.2) will terminate immediately.
+
+4. Disclaimer of Warranty.
+
+THE WORK IS PROVIDED “AS IS” WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WARRANTIES OR CONDITIONS OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE OR NON-INFRINGEMENT. YOU BEAR THE RISK OF UNDERTAKING ANY ACTIVITIES UNDER THIS LICENSE. SOME STATES’ CONSUMER LAWS DO NOT ALLOW EXCLUSION OF AN IMPLIED WARRANTY, SO THIS DISCLAIMER MAY NOT APPLY TO YOU.
+
+5. Limitation of Liability.
+
+EXCEPT AS PROHIBITED BY APPLICABLE LAW, IN NO EVENT AND UNDER NO LEGAL THEORY, WHETHER IN TORT (INCLUDING NEGLIGENCE), CONTRACT, OR OTHERWISE SHALL ANY LICENSOR BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR RELATED TO THIS LICENSE, THE USE OR INABILITY TO USE THE WORK (INCLUDING BUT NOT LIMITED TO LOSS OF GOODWILL, BUSINESS INTERRUPTION, LOST PROFITS OR DATA, COMPUTER FAILURE OR MALFUNCTION, OR ANY OTHER COMMERCIAL DAMAGES OR LOSSES), EVEN IF THE LICENSOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES."""
+        }
+    }
+
+    data class Embrace(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val shortName: String get() = "Embrace License"
+
+        override val licenseText: String
+            get() = """Embrace Software License
+
+$elementLicensed by $author is licensed under the Embrace License / Software Notice.${if (url != null) "\nSource / URL: $url" else ""}
+
+Terms and software notices: https://embrace.io/docs/embrace-software-notice/"""
+    }
+
+    data class Firebase(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val shortName: String get() = "Firebase Terms"
+
+        override val licenseText: String
+            get() = """Firebase Software Development Kit Terms
+
+$elementLicensed by $author is licensed under the Firebase Terms of Service.${if (url != null) "\nSource / URL: $url" else ""}
+
+Terms of Service: https://firebase.google.com/terms/"""
+    }
+
+    data class AndroidSdk(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+    ) : License(elementLicensed, author, url, kind) {
+        override val shortName: String get() = "Android SDK License"
+
+        override val licenseText: String
+            get() = """Android Software Development Kit License Agreement
+
+$elementLicensed by $author is licensed under the Android Software Development Kit License Agreement.${if (url != null) "\nSource / URL: $url" else ""}
+
+Terms and Conditions: https://developer.android.com/studio/terms.html"""
+    }
+
     data class Custom(
         override val elementLicensed: String,
         override val author: String,

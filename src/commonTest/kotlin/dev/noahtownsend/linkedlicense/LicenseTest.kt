@@ -334,6 +334,148 @@ class LicenseTest {
     }
 
     @Test
+    fun `Bsd0Clause licenseText contains year and author substitutions and is not copyleft`() {
+        val license = License.Bsd0Clause(elementLicensed = "Foo", author = "Jane Doe", year = "2024")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("2024"))
+        assertTrue(license.licenseText.contains("Jane Doe"))
+        assertTrue(license.licenseText.contains("BSD Zero Clause License"))
+        assertFalse(license.isCopyleft)
+        assertEquals("0BSD", license.shortName)
+    }
+
+    @Test
+    fun `Mpl1 licenseText is non-blank and is weak copyleft`() {
+        val license = License.Mpl1(elementLicensed = "Foo", author = "Jane Doe")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("Mozilla Public License, Version 1.0"))
+        assertTrue(license.isCopyleft)
+        assertEquals(License.CopyleftStrength.WEAK, license.copyleftStrength)
+        assertEquals("MPL-1.0", license.shortName)
+    }
+
+    @Test
+    fun `Mpl1_1 licenseText is non-blank and is weak copyleft`() {
+        val license = License.Mpl1_1(elementLicensed = "Foo", author = "Jane Doe")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("Mozilla Public License, Version 1.1"))
+        assertTrue(license.isCopyleft)
+        assertEquals(License.CopyleftStrength.WEAK, license.copyleftStrength)
+        assertEquals("MPL-1.1", license.shortName)
+    }
+
+    @Test
+    fun `Epl2 licenseText is non-blank and is weak copyleft`() {
+        val license = License.Epl2(elementLicensed = "Foo", author = "Jane Doe")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("Eclipse Public License, Version 2.0"))
+        assertTrue(license.isCopyleft)
+        assertEquals(License.CopyleftStrength.WEAK, license.copyleftStrength)
+        assertEquals("EPL-2.0", license.shortName)
+    }
+
+    @Test
+    fun `Edl1 licenseText is non-blank and not copyleft`() {
+        val license = License.Edl1(elementLicensed = "Foo", author = "Eclipse Foundation")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("Eclipse Distribution License - v 1.0"))
+        assertFalse(license.isCopyleft)
+        assertEquals("EDL-1.0", license.shortName)
+    }
+
+    @Test
+    fun `Bsl1 licenseText is non-blank and not copyleft`() {
+        val license = License.Bsl1(elementLicensed = "Boost Library", author = "Boost Authors")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("Boost Software License"))
+        assertFalse(license.isCopyleft)
+        assertEquals("BSL-1.0", license.shortName)
+    }
+
+    @Test
+    fun `Zlib licenseText is non-blank and not copyleft`() {
+        val license = License.Zlib(elementLicensed = "zlib", author = "Jean-loup Gailly and Mark Adler")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("zlib"))
+        assertFalse(license.isCopyleft)
+        assertEquals("Zlib", license.shortName)
+    }
+
+    @Test
+    fun `MsPl licenseText is non-blank and not copyleft`() {
+        val license = License.MsPl(elementLicensed = "Foo", author = "Microsoft")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("Microsoft Public License"))
+        assertFalse(license.isCopyleft)
+        assertEquals("MS-PL", license.shortName)
+    }
+
+    @Test
+    fun `MsRl licenseText is non-blank and is weak copyleft`() {
+        val license = License.MsRl(elementLicensed = "Foo", author = "Microsoft")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("Microsoft Reciprocal License"))
+        assertTrue(license.isCopyleft)
+        assertEquals(License.CopyleftStrength.WEAK, license.copyleftStrength)
+        assertEquals("MS-RL", license.shortName)
+    }
+
+    @Test
+    fun `AmazonSoftwareLicense licenseText is non-blank and not copyleft`() {
+        val license = License.AmazonSoftwareLicense(elementLicensed = "AWS SDK Component", author = "Amazon.com, Inc.")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("Amazon Software License"))
+        assertTrue(license.licenseText.contains("1. Definitions"))
+        assertTrue(license.licenseText.contains("2. License Grants"))
+        assertTrue(license.licenseText.contains("3. Limitations"))
+        assertFalse(license.isCopyleft)
+        assertEquals("Amazon Software License", license.shortName)
+    }
+
+    @Test
+    fun `Embrace licenseText is non-blank and not copyleft`() {
+        val license = License.Embrace(elementLicensed = "Embrace Android SDK", author = "Embrace Mobile Inc.")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("Embrace Software License"))
+        assertTrue(license.licenseText.contains("embrace-software-notice"))
+        assertFalse(license.isCopyleft)
+        assertEquals("Embrace License", license.shortName)
+    }
+
+    @Test
+    fun `Firebase licenseText is non-blank and not copyleft`() {
+        val license = License.Firebase(elementLicensed = "Firebase Analytics", author = "Google LLC")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("Firebase Software Development Kit Terms"))
+        assertTrue(license.licenseText.contains("firebase.google.com/terms"))
+        assertFalse(license.isCopyleft)
+        assertEquals("Firebase Terms", license.shortName)
+    }
+
+    @Test
+    fun `AndroidSdk licenseText is non-blank and not copyleft`() {
+        val license = License.AndroidSdk(elementLicensed = "Play Services Basement", author = "Google LLC")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("Android Software Development Kit License Agreement"))
+        assertTrue(license.licenseText.contains("developer.android.com/studio/terms.html"))
+        assertFalse(license.isCopyleft)
+        assertEquals("Android SDK License", license.shortName)
+    }
+
+    @Test
     fun `exactly the copyleft family is classified as copyleft`() {
         val allLicenses =
             listOf(
@@ -341,6 +483,7 @@ class LicenseTest {
                 License.Mit0(elementLicensed = "e", author = "a", year = "2020"),
                 License.Apache1_1(elementLicensed = "e", author = "a"),
                 License.Apache2(elementLicensed = "e", author = "a"),
+                License.Bsd0Clause(elementLicensed = "e", author = "a", year = "2020"),
                 License.Bsd2Clause(elementLicensed = "e", author = "a", year = "2020"),
                 License.Bsd3Clause(elementLicensed = "e", author = "a", year = "2020"),
                 License.Isc(elementLicensed = "e", author = "a", year = "2020"),
@@ -349,8 +492,16 @@ class LicenseTest {
                 License.Agpl3(elementLicensed = "e", author = "a"),
                 License.Lgpl2_1(elementLicensed = "e", author = "a"),
                 License.Lgpl3(elementLicensed = "e", author = "a"),
+                License.Mpl1(elementLicensed = "e", author = "a"),
+                License.Mpl1_1(elementLicensed = "e", author = "a"),
                 License.Mpl2(elementLicensed = "e", author = "a"),
                 License.Epl1(elementLicensed = "e", author = "a"),
+                License.Epl2(elementLicensed = "e", author = "a"),
+                License.Edl1(elementLicensed = "e", author = "a"),
+                License.Bsl1(elementLicensed = "e", author = "a"),
+                License.Zlib(elementLicensed = "e", author = "a"),
+                License.MsPl(elementLicensed = "e", author = "a"),
+                License.MsRl(elementLicensed = "e", author = "a"),
                 License.Cddl1(elementLicensed = "e", author = "a"),
                 License.Cddl1_1(elementLicensed = "e", author = "a"),
                 License.Unlicense(elementLicensed = "e", author = "a"),
@@ -367,19 +518,23 @@ class LicenseTest {
                 License.Ofl(elementLicensed = "e", author = "a"),
                 License.OpenGovernmentLicence(jurisdiction = "UK", version = OglVersion.V3_0, elementLicensed = "e", author = "a"),
                 License.Odbl(elementLicensed = "e", author = "a"),
+                License.AmazonSoftwareLicense(elementLicensed = "e", author = "a"),
+                License.Embrace(elementLicensed = "e", author = "a"),
+                License.Firebase(elementLicensed = "e", author = "a"),
+                License.AndroidSdk(elementLicensed = "e", author = "a"),
                 License.Custom(elementLicensed = "e", author = "a", text = "t"),
             )
 
         val copyleftTypes = allLicenses.filter { it.isCopyleft }.map { it::class.simpleName }.toSet()
 
         assertEquals(
-            setOf("Gpl2", "Gpl3", "Agpl3", "Lgpl2_1", "Lgpl3", "Mpl2", "Epl1", "Cddl1", "Cddl1_1"),
+            setOf("Gpl2", "Gpl3", "Agpl3", "Lgpl2_1", "Lgpl3", "Mpl1", "Mpl1_1", "Mpl2", "Epl1", "Epl2", "MsRl", "Cddl1", "Cddl1_1"),
             copyleftTypes,
         )
     }
 
     @Test
-    fun `copyleftStrength is STRONG for GPL and AGPL and WEAK for LGPL and MPL and EPL and CDDL and NONE otherwise`() {
+    fun `copyleftStrength is STRONG for GPL and AGPL and WEAK for LGPL and MPL and EPL and CDDL and MSRL and NONE otherwise`() {
         val strongCopyleft =
             listOf(
                 License.Gpl2(elementLicensed = "e", author = "a"),
@@ -390,8 +545,12 @@ class LicenseTest {
             listOf(
                 License.Lgpl2_1(elementLicensed = "e", author = "a"),
                 License.Lgpl3(elementLicensed = "e", author = "a"),
+                License.Mpl1(elementLicensed = "e", author = "a"),
+                License.Mpl1_1(elementLicensed = "e", author = "a"),
                 License.Mpl2(elementLicensed = "e", author = "a"),
                 License.Epl1(elementLicensed = "e", author = "a"),
+                License.Epl2(elementLicensed = "e", author = "a"),
+                License.MsRl(elementLicensed = "e", author = "a"),
                 License.Cddl1(elementLicensed = "e", author = "a"),
                 License.Cddl1_1(elementLicensed = "e", author = "a"),
             )
@@ -399,8 +558,21 @@ class LicenseTest {
             listOf(
                 License.MIT(elementLicensed = "e", author = "a", year = "2020"),
                 License.Mit0(elementLicensed = "e", author = "a", year = "2020"),
+                License.Apache1_1(elementLicensed = "e", author = "a"),
                 License.Apache2(elementLicensed = "e", author = "a"),
+                License.Bsd0Clause(elementLicensed = "e", author = "a", year = "2020"),
+                License.Bsd2Clause(elementLicensed = "e", author = "a", year = "2020"),
+                License.Bsd3Clause(elementLicensed = "e", author = "a", year = "2020"),
+                License.Isc(elementLicensed = "e", author = "a", year = "2020"),
+                License.Edl1(elementLicensed = "e", author = "a"),
+                License.Bsl1(elementLicensed = "e", author = "a"),
+                License.Zlib(elementLicensed = "e", author = "a"),
+                License.MsPl(elementLicensed = "e", author = "a"),
                 License.Cc0(elementLicensed = "e", author = "a"),
+                License.AmazonSoftwareLicense(elementLicensed = "e", author = "a"),
+                License.Embrace(elementLicensed = "e", author = "a"),
+                License.Firebase(elementLicensed = "e", author = "a"),
+                License.AndroidSdk(elementLicensed = "e", author = "a"),
                 License.Custom(elementLicensed = "e", author = "a", text = "t"),
             )
 
@@ -507,6 +679,7 @@ class LicenseTest {
                 License.Mit0(elementLicensed = "e", author = "a", year = "2020"),
                 License.Apache1_1(elementLicensed = "e", author = "a"),
                 License.Apache2(elementLicensed = "e", author = "a"),
+                License.Bsd0Clause(elementLicensed = "e", author = "a", year = "2020"),
                 License.Bsd2Clause(elementLicensed = "e", author = "a", year = "2020"),
                 License.Bsd3Clause(elementLicensed = "e", author = "a", year = "2020"),
                 License.Isc(elementLicensed = "e", author = "a", year = "2020"),
@@ -515,8 +688,16 @@ class LicenseTest {
                 License.Agpl3(elementLicensed = "e", author = "a"),
                 License.Lgpl2_1(elementLicensed = "e", author = "a"),
                 License.Lgpl3(elementLicensed = "e", author = "a"),
+                License.Mpl1(elementLicensed = "e", author = "a"),
+                License.Mpl1_1(elementLicensed = "e", author = "a"),
                 License.Mpl2(elementLicensed = "e", author = "a"),
                 License.Epl1(elementLicensed = "e", author = "a"),
+                License.Epl2(elementLicensed = "e", author = "a"),
+                License.Edl1(elementLicensed = "e", author = "a"),
+                License.Bsl1(elementLicensed = "e", author = "a"),
+                License.Zlib(elementLicensed = "e", author = "a"),
+                License.MsPl(elementLicensed = "e", author = "a"),
+                License.MsRl(elementLicensed = "e", author = "a"),
                 License.Cddl1(elementLicensed = "e", author = "a"),
                 License.Cddl1_1(elementLicensed = "e", author = "a"),
                 License.Unlicense(elementLicensed = "e", author = "a"),
@@ -533,6 +714,10 @@ class LicenseTest {
                 License.Ofl(elementLicensed = "e", author = "a"),
                 License.OpenGovernmentLicence(jurisdiction = "UK", version = OglVersion.V3_0, elementLicensed = "e", author = "a"),
                 License.Odbl(elementLicensed = "e", author = "a"),
+                License.AmazonSoftwareLicense(elementLicensed = "e", author = "a"),
+                License.Embrace(elementLicensed = "e", author = "a"),
+                License.Firebase(elementLicensed = "e", author = "a"),
+                License.AndroidSdk(elementLicensed = "e", author = "a"),
                 License.Custom(elementLicensed = "e", author = "a", text = "t"),
             )
 

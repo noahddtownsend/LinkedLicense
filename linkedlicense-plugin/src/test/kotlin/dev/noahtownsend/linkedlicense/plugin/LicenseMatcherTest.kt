@@ -123,6 +123,114 @@ class LicenseMatcherTest {
     }
 
     @Test
+    fun `match() returns Bsd0Clause for 0BSD name variants and URL`() {
+        assertEquals(License.Bsd0Clause::class, LicenseMatcher.match(name = "0BSD"))
+        assertEquals(License.Bsd0Clause::class, LicenseMatcher.match(name = "BSD-0-Clause"))
+        assertEquals(License.Bsd0Clause::class, LicenseMatcher.match(name = "BSD Zero Clause License"))
+        assertEquals(License.Bsd0Clause::class, LicenseMatcher.match(name = "Unlisted", url = "https://opensource.org/licenses/0BSD"))
+        assertEquals(License.Bsd0Clause::class, LicenseMatcher.match(name = "Unlisted", url = "https://spdx.org/licenses/0BSD.html"))
+    }
+
+    @Test
+    fun `match() returns Mpl1 and Mpl1_1 for MPL 1_0 and MPL 1_1 name variants and URLs`() {
+        assertEquals(License.Mpl1::class, LicenseMatcher.match(name = "MPL-1.0"))
+        assertEquals(License.Mpl1::class, LicenseMatcher.match(name = "Mozilla Public License 1.0"))
+        assertEquals(License.Mpl1::class, LicenseMatcher.match(name = "Unlisted", url = "https://www.mozilla.org/MPL/1.0/"))
+        assertEquals(License.Mpl1::class, LicenseMatcher.match(name = "Unlisted", url = "https://spdx.org/licenses/MPL-1.0.html"))
+
+        assertEquals(License.Mpl1_1::class, LicenseMatcher.match(name = "MPL-1.1"))
+        assertEquals(License.Mpl1_1::class, LicenseMatcher.match(name = "Mozilla Public License 1.1"))
+        assertEquals(License.Mpl1_1::class, LicenseMatcher.match(name = "Mozilla Public License (MPL) 1.1"))
+        assertEquals(License.Mpl1_1::class, LicenseMatcher.match(name = "Unlisted", url = "https://www.mozilla.org/MPL/1.1/"))
+        assertEquals(License.Mpl1_1::class, LicenseMatcher.match(name = "Unlisted", url = "https://spdx.org/licenses/MPL-1.1.html"))
+    }
+
+    @Test
+    fun `match() returns Epl2 for Eclipse Public License 2_0 name variants and URL`() {
+        assertEquals(License.Epl2::class, LicenseMatcher.match(name = "EPL-2.0"))
+        assertEquals(License.Epl2::class, LicenseMatcher.match(name = "Eclipse Public License - v 2.0"))
+        assertEquals(License.Epl2::class, LicenseMatcher.match(name = "Eclipse Public License 2.0"))
+        assertEquals(License.Epl2::class, LicenseMatcher.match(name = "Unlisted", url = "https://www.eclipse.org/legal/epl-2.0/"))
+        assertEquals(License.Epl2::class, LicenseMatcher.match(name = "Unlisted", url = "https://spdx.org/licenses/EPL-2.0.html"))
+    }
+
+    @Test
+    fun `match() returns Edl1 for Eclipse Distribution License 1_0 name variants and URL`() {
+        assertEquals(License.Edl1::class, LicenseMatcher.match(name = "EDL-1.0"))
+        assertEquals(License.Edl1::class, LicenseMatcher.match(name = "Eclipse Distribution License - v 1.0"))
+        assertEquals(License.Edl1::class, LicenseMatcher.match(name = "EDL"))
+        assertEquals(License.Edl1::class, LicenseMatcher.match(name = "Unlisted", url = "https://www.eclipse.org/org/documents/edl-v10.php"))
+        assertEquals(License.Edl1::class, LicenseMatcher.match(name = "Unlisted", url = "https://spdx.org/licenses/EDL-1.0.html"))
+    }
+
+    @Test
+    fun `match() returns Bsl1 for Boost Software License name variants and URL`() {
+        assertEquals(License.Bsl1::class, LicenseMatcher.match(name = "BSL-1.0"))
+        assertEquals(License.Bsl1::class, LicenseMatcher.match(name = "Boost Software License"))
+        assertEquals(License.Bsl1::class, LicenseMatcher.match(name = "Boost Software License 1.0"))
+        assertEquals(License.Bsl1::class, LicenseMatcher.match(name = "Unlisted", url = "https://www.boost.org/LICENSE_1_0.txt"))
+        assertEquals(License.Bsl1::class, LicenseMatcher.match(name = "Unlisted", url = "https://spdx.org/licenses/BSL-1.0.html"))
+    }
+
+    @Test
+    fun `match() returns Zlib for zlib name variants and URL`() {
+        assertEquals(License.Zlib::class, LicenseMatcher.match(name = "Zlib"))
+        assertEquals(License.Zlib::class, LicenseMatcher.match(name = "zlib license"))
+        assertEquals(License.Zlib::class, LicenseMatcher.match(name = "The zlib/libpng License"))
+        assertEquals(License.Zlib::class, LicenseMatcher.match(name = "Unlisted", url = "https://zlib.net/zlib_license.html"))
+        assertEquals(License.Zlib::class, LicenseMatcher.match(name = "Unlisted", url = "https://spdx.org/licenses/Zlib.html"))
+    }
+
+    @Test
+    fun `match() returns MsPl and MsRl for Microsoft public and reciprocal licenses`() {
+        assertEquals(License.MsPl::class, LicenseMatcher.match(name = "MS-PL"))
+        assertEquals(License.MsPl::class, LicenseMatcher.match(name = "Microsoft Public License"))
+        assertEquals(License.MsPl::class, LicenseMatcher.match(name = "Unlisted", url = "https://opensource.org/licenses/MS-PL"))
+
+        assertEquals(License.MsRl::class, LicenseMatcher.match(name = "MS-RL"))
+        assertEquals(License.MsRl::class, LicenseMatcher.match(name = "Microsoft Reciprocal License"))
+        assertEquals(License.MsRl::class, LicenseMatcher.match(name = "Unlisted", url = "https://opensource.org/licenses/MS-RL"))
+    }
+
+    @Test
+    fun `match() returns AmazonSoftwareLicense for ASL name variants and URL`() {
+        assertEquals(License.AmazonSoftwareLicense::class, LicenseMatcher.match(name = "Amazon Software License"))
+        assertEquals(License.AmazonSoftwareLicense::class, LicenseMatcher.match(name = "Amazon Software License 1.0"))
+        assertEquals(License.AmazonSoftwareLicense::class, LicenseMatcher.match(name = "amazon-sl"))
+        assertEquals(License.AmazonSoftwareLicense::class, LicenseMatcher.match(name = "ASL"))
+        assertEquals(License.AmazonSoftwareLicense::class, LicenseMatcher.match(name = "Unlisted", url = "https://aws.amazon.com/asl/"))
+    }
+
+    @Test
+    fun `match() returns Embrace for Embrace name variants and URL`() {
+        assertEquals(License.Embrace::class, LicenseMatcher.match(name = "Embrace License"))
+        assertEquals(License.Embrace::class, LicenseMatcher.match(name = "Embrace Software License"))
+        assertEquals(License.Embrace::class, LicenseMatcher.match(name = "Embrace"))
+        assertEquals(License.Embrace::class, LicenseMatcher.match(name = "Unlisted", url = "https://embrace.io/docs/embrace-software-notice/"))
+        assertEquals(License.Embrace::class, LicenseMatcher.match(name = "Unlisted", url = "https://embrace.io/docs/terms-of-service/"))
+    }
+
+    @Test
+    fun `match() returns Firebase for Firebase terms name variants and URL`() {
+        assertEquals(License.Firebase::class, LicenseMatcher.match(name = "Firebase Terms"))
+        assertEquals(License.Firebase::class, LicenseMatcher.match(name = "Firebase Terms of Service"))
+        assertEquals(License.Firebase::class, LicenseMatcher.match(name = "Firebase SDK Terms of Service"))
+        assertEquals(License.Firebase::class, LicenseMatcher.match(name = "Unlisted", url = "https://firebase.google.com/terms/"))
+    }
+
+    @Test
+    fun `match() returns AndroidSdk for Android SDK license name variants and URL`() {
+        assertEquals(License.AndroidSdk::class, LicenseMatcher.match(name = "Android Software Development Kit License"))
+        assertEquals(License.AndroidSdk::class, LicenseMatcher.match(name = "Android Software Development Kit License Agreement"))
+        assertEquals(License.AndroidSdk::class, LicenseMatcher.match(name = "Android Software Development License Agreement"))
+        assertEquals(License.AndroidSdk::class, LicenseMatcher.match(name = "Android SDK License"))
+        assertEquals(License.AndroidSdk::class, LicenseMatcher.match(name = "Android SDK"))
+        assertEquals(License.AndroidSdk::class, LicenseMatcher.match(name = "Google Play Services License"))
+        assertEquals(License.AndroidSdk::class, LicenseMatcher.match(name = "Unlisted", url = "https://developer.android.com/studio/terms.html"))
+        assertEquals(License.AndroidSdk::class, LicenseMatcher.match(name = "Unlisted", url = "https://developer.android.com/sdk/terms.html"))
+    }
+
+    @Test
     fun `match() returns null for an unrecognized name and url`() {
         assertNull(LicenseMatcher.match(name = "Some Bespoke License", url = "https://example.com/license"))
     }
