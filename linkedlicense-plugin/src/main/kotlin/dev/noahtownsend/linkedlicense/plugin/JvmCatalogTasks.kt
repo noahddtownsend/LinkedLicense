@@ -34,9 +34,9 @@ internal object JvmCatalogTasks {
 
         try {
             val kotlinExtension = project.extensions.getByType(KotlinProjectExtension::class.java)
-            kotlinExtension.sourceSets.getByName("main").kotlin.srcDir(task)
+            kotlinExtension.sourceSets.getByName("main").kotlin.srcDir(task.flatMap { it.outputDir })
         } catch (_: Throwable) {
-            registerSourceDirReflectively(project, "main", task)
+            registerSourceDirReflectively(project, "main", task.flatMap { it.outputDir })
         }
     }
 

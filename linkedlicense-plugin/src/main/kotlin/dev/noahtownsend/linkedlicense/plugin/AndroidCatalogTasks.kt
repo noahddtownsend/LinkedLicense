@@ -72,19 +72,24 @@ internal object AndroidCatalogTasks {
         wireKotlinSourceSet(project, variantName, variantTask)
     }
 
-    private fun wireKotlinSourceSet(project: Project, variantName: String, taskProvider: Any) {
+    private fun wireKotlinSourceSet(
+        project: Project,
+        variantName: String,
+        taskProvider: org.gradle.api.tasks.TaskProvider<GenerateLicenseCatalogTask>,
+    ) {
+        val outputDirProvider = taskProvider.flatMap { it.outputDir }
         try {
             val kotlinExtension = project.extensions.getByType(KotlinProjectExtension::class.java)
             val targetSourceSet =
                 kotlinExtension.sourceSets.findByName(variantName)
                     ?: kotlinExtension.sourceSets.findByName("main")
-            targetSourceSet?.kotlin?.srcDir(taskProvider)
+            targetSourceSet?.kotlin?.srcDir(outputDirProvider)
         } catch (_: Throwable) {
             try {
-                JvmCatalogTasks.registerSourceDirReflectively(project, variantName, taskProvider)
+                JvmCatalogTasks.registerSourceDirReflectively(project, variantName, outputDirProvider)
             } catch (_: Throwable) {
                 try {
-                    JvmCatalogTasks.registerSourceDirReflectively(project, "main", taskProvider)
+                    JvmCatalogTasks.registerSourceDirReflectively(project, "main", outputDirProvider)
                 } catch (_: Throwable) {
                     // Ignore if source set not found
                 }

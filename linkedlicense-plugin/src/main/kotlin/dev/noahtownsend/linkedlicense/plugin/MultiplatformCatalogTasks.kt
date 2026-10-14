@@ -86,7 +86,7 @@ internal object MultiplatformCatalogTasks {
             }
 
         kotlinExtension.sourceSets.matching { it.name == sourceSetName }.all { sourceSet ->
-            sourceSet.kotlin.srcDir(task)
+            sourceSet.kotlin.srcDir(task.flatMap { it.outputDir })
         }
     }
 
@@ -116,7 +116,7 @@ internal object MultiplatformCatalogTasks {
             }
 
         kotlinExtension.sourceSets.matching { it.name == sourceSetName }.all { sourceSet ->
-            sourceSet.kotlin.srcDir(task)
+            sourceSet.kotlin.srcDir(task.flatMap { it.outputDir })
         }
     }
 
@@ -144,7 +144,7 @@ internal object MultiplatformCatalogTasks {
             }
 
         kotlinExtension.sourceSets.matching { it.name == "commonMain" }.all { sourceSet ->
-            sourceSet.kotlin.srcDir(task)
+            sourceSet.kotlin.srcDir(task.flatMap { it.outputDir })
         }
     }
 
