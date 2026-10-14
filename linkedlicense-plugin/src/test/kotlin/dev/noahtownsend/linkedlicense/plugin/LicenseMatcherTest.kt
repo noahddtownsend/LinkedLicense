@@ -231,6 +231,29 @@ class LicenseMatcherTest {
     }
 
     @Test
+    fun `match() returns AndroidSdk for Play Services, Play Core, Play Integrity, and ML Kit`() {
+        assertEquals(License.AndroidSdk::class, LicenseMatcher.match(name = "Play Core Software Development Kit Terms of Service"))
+        assertEquals(License.AndroidSdk::class, LicenseMatcher.match(name = "Play Integrity API Terms of Service"))
+        assertEquals(License.AndroidSdk::class, LicenseMatcher.match(name = "ML Kit Terms of Service"))
+        assertEquals(License.AndroidSdk::class, LicenseMatcher.match(name = "Unlisted", url = "https://developer.android.com/guide/playcore/license"))
+        assertEquals(License.AndroidSdk::class, LicenseMatcher.match(name = "Unlisted", url = "https://developer.android.com/google/play/integrity/overview"))
+        assertEquals(License.AndroidSdk::class, LicenseMatcher.match(name = "Unlisted", url = "https://developers.google.com/ml-kit/terms"))
+    }
+
+    @Test
+    fun `match() returns Mapbox for Mapbox terms name variants and URL`() {
+        assertEquals(License.Mapbox::class, LicenseMatcher.match(name = "Mapbox Terms of Service"))
+        assertEquals(License.Mapbox::class, LicenseMatcher.match(name = "Mapbox Terms"))
+        assertEquals(License.Mapbox::class, LicenseMatcher.match(name = "Mapbox ToS"))
+        assertEquals(License.Mapbox::class, LicenseMatcher.match(name = "Unlisted", url = "https://www.mapbox.com/legal/tos/"))
+    }
+
+    @Test
+    fun `match() returns Bsd3Clause for Chromium and built-in dependencies`() {
+        assertEquals(License.Bsd3Clause::class, LicenseMatcher.match(name = "Chromium and built-in dependencies"))
+    }
+
+    @Test
     fun `match() returns null for an unrecognized name and url`() {
         assertNull(LicenseMatcher.match(name = "Some Bespoke License", url = "https://example.com/license"))
     }

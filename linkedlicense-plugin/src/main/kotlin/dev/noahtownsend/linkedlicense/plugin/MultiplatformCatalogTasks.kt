@@ -5,6 +5,7 @@ import org.gradle.api.artifacts.Configuration
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 
 /**
  * Registers one `generate<SourceSet>LicenseCatalog` task per real platform target's `main`
@@ -27,26 +28,66 @@ internal object MultiplatformCatalogTasks {
         extension: LinkedLicenseExtension,
     ) {
         val kotlinExtension = project.extensions.getByType(KotlinMultiplatformExtension::class.java)
-        val targetConfigurations = mutableListOf<Configuration>()
 
         // The synthetic "metadata" target (platformType == common) is skipped - it isn't one
         // real compilation/classpath, it's what the commonMain union below stands in for.
         kotlinExtension.targets.matching { it.platformType != KotlinPlatformType.common }.all { target ->
-            val compilation = target.compilations.findByName(KotlinCompilation.MAIN_COMPILATION_NAME) ?: return@all
+            if (target.platformType == KotlinPlatformType.androidJvm) {
+                registerAndroidTarget(project, extension, kotlinExtension, target)
+                return@all
+            }
+
+            val compilation = target.compilations.findByName(KotlinCompilation.MAIN_COMPILATION_NAME)
+            if (compilation == null) {
+                project.logger.warn("linkedlicense: target '${target.name}' has no 'main' compilation and was skipped.")
+                return@all
+            }
+
             val sourceSetName = compilation.defaultSourceSet.name
 
             // Native targets (e.g. iosX64) have no separate runtime classpath - only
             // compileDependencyConfigurationName resolves for them. JVM-like targets have both;
             // prefer the runtime one, matching the plain-JVM path's use of "runtimeClasspath".
-            val configurationName =
-                compilation.runtimeDependencyConfigurationName ?: compilation.compileDependencyConfigurationName
-            val configuration = project.configurations.getByName(configurationName)
-
-            targetConfigurations += configuration
-            registerSourceSetTask(project, extension, kotlinExtension, sourceSetName, configuration)
+            registerSourceSetTask(project, extension, kotlinExtension, sourceSetName) {
+                val configurationName =
+                    compilation.runtimeDependencyConfigurationName ?: compilation.compileDependencyConfigurationName
+                listOfNotNull(project.configurations.findByName(configurationName))
+            }
         }
 
-        registerCommonMainTask(project, extension, kotlinExtension, targetConfigurations)
+        registerCommonMainTask(project, extension, kotlinExtension)
+    }
+
+    private fun registerAndroidTarget(
+        project: Project,
+        extension: LinkedLicenseExtension,
+        kotlinExtension: KotlinMultiplatformExtension,
+        target: KotlinTarget,
+    ) {
+        val sourceSetName = "androidMain"
+        val outputDir = project.layout.buildDirectory.dir("generated/linkedlicense/$sourceSetName").get().asFile
+        val taskName = "generateAndroidMainLicenseCatalog"
+
+        val task =
+            project.tasks.register(taskName, GenerateLicenseCatalogTask::class.java) { task ->
+                CatalogTaskExecution.configureTask(
+                    task = task,
+                    project = project,
+                    extension = extension,
+                    configurationsProvider = {
+                        findAndroidConfigurations(project, target)
+                    },
+                    sourceSetName = sourceSetName,
+                    outputDir = outputDir,
+                    includeAssets = false,
+                    includeNotices = false,
+                    npmNodeModulesDir = null,
+                )
+            }
+
+        kotlinExtension.sourceSets.matching { it.name == sourceSetName }.all { sourceSet ->
+            sourceSet.kotlin.srcDir(task)
+        }
     }
 
     private fun registerSourceSetTask(
@@ -54,57 +95,94 @@ internal object MultiplatformCatalogTasks {
         extension: LinkedLicenseExtension,
         kotlinExtension: KotlinMultiplatformExtension,
         sourceSetName: String,
-        configuration: Configuration,
+        configurationsProvider: () -> List<Configuration>,
     ) {
         val outputDir = project.layout.buildDirectory.dir("generated/linkedlicense/$sourceSetName").get().asFile
         val taskName = "generate${sourceSetName.replaceFirstChar { it.uppercase() }}LicenseCatalog"
 
         val task =
-            project.tasks.register(taskName) { task ->
-                task.group = "linkedlicense"
-                task.description =
-                    "Scans the resolved dependency graph for the $sourceSetName source set and generates its license catalog."
-                task.outputs.dir(outputDir)
-
-                // [assets] entries (README §3.7) aren't tied to any one target - they belong to
-                // commonMain only, not repeated in every platform target's own catalog.
-                task.doLast {
-                    CatalogTaskExecution.generateCatalog(
-                        project = project,
-                        extension = extension,
-                        configuration = configuration,
-                        outputDir = outputDir,
-                        includeAssets = false,
-                        npmNodeModulesDir = NpmNodeModulesLocator.locate(project, sourceSetName),
-                        sourceSetName = sourceSetName,
-                    )
-                }
+            project.tasks.register(taskName, GenerateLicenseCatalogTask::class.java) { task ->
+                CatalogTaskExecution.configureTask(
+                    task = task,
+                    project = project,
+                    extension = extension,
+                    configurationsProvider = configurationsProvider,
+                    sourceSetName = sourceSetName,
+                    outputDir = outputDir,
+                    includeAssets = false,
+                    includeNotices = false,
+                    npmNodeModulesDir = NpmNodeModulesLocator.locate(project, sourceSetName),
+                )
             }
 
-        kotlinExtension.sourceSets.getByName(sourceSetName).kotlin.srcDir(task)
+        kotlinExtension.sourceSets.matching { it.name == sourceSetName }.all { sourceSet ->
+            sourceSet.kotlin.srcDir(task)
+        }
     }
 
     private fun registerCommonMainTask(
         project: Project,
         extension: LinkedLicenseExtension,
         kotlinExtension: KotlinMultiplatformExtension,
-        targetConfigurations: List<Configuration>,
     ) {
         val outputDir = project.layout.buildDirectory.dir("generated/linkedlicense/commonMain").get().asFile
 
         val task =
-            project.tasks.register("generateCommonMainLicenseCatalog") { task ->
-                task.group = "linkedlicense"
-                task.description =
-                    "Generates the license catalog for commonMain - the union of every platform target's " +
-                        "resolved coordinates, per README §2."
-                task.outputs.dir(outputDir)
-
-                task.doLast {
-                    CatalogTaskExecution.generateUnionCatalog(project, extension, targetConfigurations, outputDir)
-                }
+            project.tasks.register("generateCommonMainLicenseCatalog", GenerateLicenseCatalogTask::class.java) { task ->
+                CatalogTaskExecution.configureTask(
+                    task = task,
+                    project = project,
+                    extension = extension,
+                    configurationsProvider = {
+                        collectTargetConfigurations(project, kotlinExtension)
+                    },
+                    sourceSetName = "commonMain",
+                    outputDir = outputDir,
+                    includeAssets = true,
+                    npmNodeModulesDir = null,
+                )
             }
 
-        kotlinExtension.sourceSets.getByName("commonMain").kotlin.srcDir(task)
+        kotlinExtension.sourceSets.matching { it.name == "commonMain" }.all { sourceSet ->
+            sourceSet.kotlin.srcDir(task)
+        }
+    }
+
+    private fun collectTargetConfigurations(
+        project: Project,
+        kotlinExtension: KotlinMultiplatformExtension,
+    ): List<Configuration> {
+        val configs = mutableListOf<Configuration>()
+        kotlinExtension.targets.matching { it.platformType != KotlinPlatformType.common }.forEach { target ->
+            if (target.platformType == KotlinPlatformType.androidJvm) {
+                configs += findAndroidConfigurations(project, target)
+            } else {
+                val compilation = target.compilations.findByName(KotlinCompilation.MAIN_COMPILATION_NAME)
+                if (compilation != null) {
+                    val configName =
+                        compilation.runtimeDependencyConfigurationName ?: compilation.compileDependencyConfigurationName
+                    project.configurations.findByName(configName)?.let { configs += it }
+                }
+            }
+        }
+        return configs
+    }
+
+    private fun findAndroidConfigurations(
+        project: Project,
+        target: KotlinTarget,
+    ): List<Configuration> {
+        val nonTestCompilations = target.compilations.filter { compilation ->
+            !compilation.name.contains("Test", ignoreCase = true)
+        }
+        val releaseCompilations = nonTestCompilations.filter { compilation ->
+            compilation.name.contains("Release", ignoreCase = true)
+        }
+        val selected = releaseCompilations.ifEmpty { nonTestCompilations }
+        return selected.mapNotNull { compilation ->
+            val configName =
+                compilation.runtimeDependencyConfigurationName ?: compilation.compileDependencyConfigurationName
+            project.configurations.findByName(configName)
+        }
     }
 }

@@ -49,27 +49,22 @@ internal object AndroidCatalogTasks {
         val outputDir = project.layout.buildDirectory.dir("generated/linkedlicense/$variantName").get().asFile
 
         val variantTask =
-            project.tasks.register(taskName) { task ->
-                task.group = "linkedlicense"
-                task.description =
-                    "Scans the resolved dependency graph for the $variantName variant and generates its license catalog."
-                task.outputs.dir(outputDir)
-
-                task.doLast {
-                    val configurationName = "${variantName}RuntimeClasspath"
-                    val configuration =
-                        project.configurations.findByName(configurationName)
-                            ?: project.configurations.getByName("${variantName}CompileClasspath")
-
-                    CatalogTaskExecution.generateCatalog(
-                        project = project,
-                        extension = extension,
-                        configuration = configuration,
-                        outputDir = outputDir,
-                        includeAssets = true,
-                        sourceSetName = variantName,
-                    )
-                }
+            project.tasks.register(taskName, GenerateLicenseCatalogTask::class.java) { task ->
+                CatalogTaskExecution.configureTask(
+                    task = task,
+                    project = project,
+                    extension = extension,
+                    configurationsProvider = {
+                        val configurationName = "${variantName}RuntimeClasspath"
+                        val config =
+                            project.configurations.findByName(configurationName)
+                                ?: project.configurations.findByName("${variantName}CompileClasspath")
+                        listOfNotNull(config)
+                    },
+                    sourceSetName = variantName,
+                    outputDir = outputDir,
+                    includeAssets = true,
+                )
             }
 
         rootTask.configure { it.dependsOn(variantTask) }

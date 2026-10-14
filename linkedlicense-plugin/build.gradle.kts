@@ -26,7 +26,7 @@ group = "dev.noahtownsend"
 version = "0.9.4"
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(17)
 }
 
 gradlePlugin {
