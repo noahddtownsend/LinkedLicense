@@ -1382,6 +1382,23 @@ $elementLicensed by $author is licensed under the Android Software Development K
 Terms and Conditions: https://developer.android.com/studio/terms.html"""
     }
 
+    data class Mapbox(
+        override val elementLicensed: String,
+        override val author: String,
+        override val url: String? = null,
+        override val kind: Kind = Kind.DEPENDENCY,
+        override val notice: String? = null,
+    ) : License(elementLicensed, author, url, kind, notice) {
+        override val shortName: String get() = "Mapbox ToS"
+
+        override val licenseText: String
+            get() = """Mapbox Terms of Service
+
+$elementLicensed by $author is licensed under the Mapbox Terms of Service.${if (url != null) "\nSource / URL: $url" else ""}
+
+Terms of Service: https://www.mapbox.com/legal/tos/"""
+    }
+
     data class Custom(
         override val elementLicensed: String,
         override val author: String,

@@ -18,29 +18,25 @@ internal object JvmCatalogTasks {
         val outputDir = project.layout.buildDirectory.dir("generated/linkedlicense/main").get().asFile
 
         val task =
-            project.tasks.register("generateLicenseCatalog") { task ->
-                task.group = "linkedlicense"
-                task.description = "Scans the resolved dependency graph and generates the license catalog."
-                task.outputs.dir(outputDir)
-
-                task.doLast {
-                    val configuration = project.configurations.getByName("runtimeClasspath")
-                    CatalogTaskExecution.generateCatalog(
-                        project,
-                        extension,
-                        configuration,
-                        outputDir,
-                        includeAssets = true,
-                        sourceSetName = "main",
-                    )
-                }
+            project.tasks.register("generateLicenseCatalog", GenerateLicenseCatalogTask::class.java) { task ->
+                CatalogTaskExecution.configureTask(
+                    task = task,
+                    project = project,
+                    extension = extension,
+                    configurationsProvider = {
+                        listOfNotNull(project.configurations.findByName("runtimeClasspath"))
+                    },
+                    sourceSetName = "main",
+                    outputDir = outputDir,
+                    includeAssets = true,
+                )
             }
 
         try {
             val kotlinExtension = project.extensions.getByType(KotlinProjectExtension::class.java)
-            kotlinExtension.sourceSets.getByName("main").kotlin.srcDir(task)
+            kotlinExtension.sourceSets.getByName("main").kotlin.srcDir(task.flatMap { it.outputDir })
         } catch (_: Throwable) {
-            registerSourceDirReflectively(project, "main", task)
+            registerSourceDirReflectively(project, "main", task.flatMap { it.outputDir })
         }
     }
 

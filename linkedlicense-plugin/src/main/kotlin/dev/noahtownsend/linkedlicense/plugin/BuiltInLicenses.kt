@@ -73,6 +73,10 @@ object BuiltInLicenses {
             "AndroidSDK" to License.AndroidSdk::class,
             "AndroidSoftwareDevelopmentKit" to License.AndroidSdk::class,
             "AndroidSoftwareDevelopmentKitLicenseAgreement" to License.AndroidSdk::class,
+            "Mapbox" to License.Mapbox::class,
+            "MapboxToS" to License.Mapbox::class,
+            "MapboxTerms" to License.Mapbox::class,
+            "MapboxTermsOfService" to License.Mapbox::class,
             "Custom" to License.Custom::class,
         )
 

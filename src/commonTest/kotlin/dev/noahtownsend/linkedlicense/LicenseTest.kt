@@ -477,6 +477,17 @@ class LicenseTest {
     }
 
     @Test
+    fun `Mapbox licenseText is non-blank and not copyleft`() {
+        val license = License.Mapbox(elementLicensed = "Mapbox Maps", author = "Mapbox")
+
+        assertTrue(license.licenseText.isNotBlank())
+        assertTrue(license.licenseText.contains("Mapbox Terms of Service"))
+        assertTrue(license.licenseText.contains("mapbox.com/legal/tos"))
+        assertFalse(license.isCopyleft)
+        assertEquals("Mapbox ToS", license.shortName)
+    }
+
+    @Test
     fun `exactly the copyleft family is classified as copyleft`() {
         val allLicenses =
             listOf(
@@ -523,6 +534,7 @@ class LicenseTest {
                 License.Embrace(elementLicensed = "e", author = "a"),
                 License.Firebase(elementLicensed = "e", author = "a"),
                 License.AndroidSdk(elementLicensed = "e", author = "a"),
+                License.Mapbox(elementLicensed = "e", author = "a"),
                 License.Custom(elementLicensed = "e", author = "a", text = "t"),
             )
 
@@ -574,6 +586,7 @@ class LicenseTest {
                 License.Embrace(elementLicensed = "e", author = "a"),
                 License.Firebase(elementLicensed = "e", author = "a"),
                 License.AndroidSdk(elementLicensed = "e", author = "a"),
+                License.Mapbox(elementLicensed = "e", author = "a"),
                 License.Custom(elementLicensed = "e", author = "a", text = "t"),
             )
 
@@ -719,6 +732,7 @@ class LicenseTest {
                 License.Embrace(elementLicensed = "e", author = "a"),
                 License.Firebase(elementLicensed = "e", author = "a"),
                 License.AndroidSdk(elementLicensed = "e", author = "a"),
+                License.Mapbox(elementLicensed = "e", author = "a"),
                 License.Custom(elementLicensed = "e", author = "a", text = "t"),
             )
 
@@ -826,6 +840,7 @@ class LicenseTest {
                 License.Embrace(elementLicensed = "e", author = "a"),
                 License.Firebase(elementLicensed = "e", author = "a"),
                 License.AndroidSdk(elementLicensed = "e", author = "a"),
+                License.Mapbox(elementLicensed = "e", author = "a"),
             )
 
         attributionLicenses.forEach { license ->

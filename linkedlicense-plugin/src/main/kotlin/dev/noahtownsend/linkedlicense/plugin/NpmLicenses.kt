@@ -150,6 +150,11 @@ private fun visitPackageDir(
     seen: MutableMap<Coordinate, NpmPackageInfo>,
     seenKeys: MutableSet<String>,
 ) {
+    val canonicalPath = runCatching { packageDir.canonicalPath }.getOrNull() ?: packageDir.path
+    if (canonicalPath.contains("/packages/") || canonicalPath.contains("/packages_imported/")) {
+        return
+    }
+
     val info = parseNpmPackageJson(File(packageDir, "package.json")) ?: return
     val name = info.name ?: return
     val version = info.version ?: "0.0.0"

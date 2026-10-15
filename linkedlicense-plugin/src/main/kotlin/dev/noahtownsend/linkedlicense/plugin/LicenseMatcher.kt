@@ -263,6 +263,20 @@ object LicenseMatcher {
             "android sdk" to License.AndroidSdk::class,
             "google play services license" to License.AndroidSdk::class,
             "google play services" to License.AndroidSdk::class,
+            "play core software development kit terms of service" to License.AndroidSdk::class,
+            "play core software development kit terms" to License.AndroidSdk::class,
+            "play core terms of service" to License.AndroidSdk::class,
+            "play core terms" to License.AndroidSdk::class,
+            "play integrity api terms of service" to License.AndroidSdk::class,
+            "play integrity terms of service" to License.AndroidSdk::class,
+            "play integrity terms" to License.AndroidSdk::class,
+            "ml kit terms of service" to License.AndroidSdk::class,
+            "ml kit terms" to License.AndroidSdk::class,
+            "chromium and built-in dependencies" to License.Bsd3Clause::class,
+            "mapbox terms of service" to License.Mapbox::class,
+            "mapbox terms" to License.Mapbox::class,
+            "mapbox tos" to License.Mapbox::class,
+            "the mapbox terms of service" to License.Mapbox::class,
         )
 
     private val urlTable: List<Pair<Regex, KClass<out License>>> =
@@ -322,6 +336,10 @@ object LicenseMatcher {
             Regex("sun\\.com/cddl", RegexOption.IGNORE_CASE) to License.Cddl1::class,
             Regex("unlicense\\.org", RegexOption.IGNORE_CASE) to License.Unlicense::class,
             Regex("opendatacommons\\.org/licenses/odbl", RegexOption.IGNORE_CASE) to License.Odbl::class,
+            Regex("mapbox\\.com/legal/tos", RegexOption.IGNORE_CASE) to License.Mapbox::class,
+            Regex("developer\\.android\\.com/guide/playcore/license", RegexOption.IGNORE_CASE) to License.AndroidSdk::class,
+            Regex("developer\\.android\\.com/google/play/integrity", RegexOption.IGNORE_CASE) to License.AndroidSdk::class,
+            Regex("developers\\.google\\.com/ml-kit/terms", RegexOption.IGNORE_CASE) to License.AndroidSdk::class,
         )
 
     fun match(

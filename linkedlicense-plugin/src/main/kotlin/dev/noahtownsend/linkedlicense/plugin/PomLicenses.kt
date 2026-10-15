@@ -2,25 +2,26 @@ package dev.noahtownsend.linkedlicense.plugin
 
 import org.w3c.dom.Element
 import java.io.File
+import java.io.Serializable
 import javax.xml.parsers.DocumentBuilderFactory
 
 /** A single `<license>` entry from a POM's `<licenses>` block. */
 data class PomLicense(
     val name: String?,
     val url: String?,
-)
+) : Serializable
 
 /** A `<parent>` reference from a POM. */
 data class ParentPomRef(
     val groupId: String,
     val artifactId: String,
     val version: String,
-)
+) : Serializable
 
 /** A `<developer>` entry from a POM's `<developers>` block. */
 data class PomDeveloper(
     val name: String?,
-)
+) : Serializable
 
 /**
  * Carries parsed POM metadata used for license resolution, author attribution, display names,
@@ -37,7 +38,7 @@ data class PomInfo(
     val groupId: String? = null,
     val artifactId: String? = null,
     val version: String? = null,
-) {
+) : Serializable {
     /**
      * Resolves the author in priority order (Bug 3):
      * 1. `<organization><name>`

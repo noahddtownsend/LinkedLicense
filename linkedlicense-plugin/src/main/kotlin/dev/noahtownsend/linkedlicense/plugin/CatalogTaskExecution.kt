@@ -8,6 +8,7 @@ import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedArtifactResult
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
+import org.gradle.api.logging.Logger
 import org.gradle.maven.MavenModule
 import org.gradle.maven.MavenPomArtifact
 import dev.noahtownsend.linkedlicense.License
@@ -33,110 +34,106 @@ import java.time.Duration
  * itself, and confined to plain helper objects like this one, avoids that decoration failure.
  */
 internal object CatalogTaskExecution {
-    fun generateCatalog(
+
+    fun configureTask(
+        task: GenerateLicenseCatalogTask,
         project: Project,
         extension: LinkedLicenseExtension,
-        configuration: Configuration,
+        configurationsProvider: () -> List<Configuration>,
+        sourceSetName: String,
         outputDir: File,
         includeAssets: Boolean,
-        /**
-         * npm scanning (README §2.3): the `node_modules` directory KGP installed this source
-         * set's declared `npm(...)` dependencies into, if this is a `jsMain`/`wasmJsMain`
-         * source set with any. `null`/non-existent means "nothing to scan" - not an error.
-         */
+        includeNotices: Boolean = true,
         npmNodeModulesDir: File? = null,
-        /**
-         * The Kotlin source set this catalog is generated for (e.g. `"main"`, `"jvmMain"`).
-         * Lowercased and appended to the generated file's package (README §2.1 step 7), so that
-         * `commonMain`'s generated file — merged by KGP's default hierarchy template into every
-         * platform target's own compilation — never redeclares the same `object
-         * GeneratedLicenses` as that target's own generated file.
-         */
-        sourceSetName: String,
     ) {
         OverridesFileScaffold.ensureExists(extension.overridesFile)
 
-        val componentIds = collectResolvedComponents(configuration.incoming.resolutionResult.root)
-        val npmPackageInfo = npmNodeModulesDir?.let { scanNpmPackageInfo(it) }.orEmpty()
+        task.group = "linkedlicense"
+        task.description = "Scans the resolved dependency graph for $sourceSetName and generates its license catalog."
 
-        generateCatalogFromComponents(
-            project = project,
-            extension = extension,
-            componentIds = componentIds,
-            extraCoordinates = npmPackageInfo.keys.toList(),
-            extraPomInfo = npmPackageInfo.mapValues { (_, info) -> info.toPomInfo() },
-            configurations = listOf(configuration),
-            outputDir = outputDir,
-            includeAssets = includeAssets,
-            sourceSetName = sourceSetName,
-        )
-    }
-
-    /**
-     * `commonMain`'s catalog (README §2): every platform target's classpath is resolved and
-     * dedup'd independently, then the resulting coordinate sets are unioned by resolved
-     * coordinate before running the pure resolution core once - so a dependency that exists on
-     * only one target still shows up, and one shared by all targets appears exactly once.
-     */
-    fun generateUnionCatalog(
-        project: Project,
-        extension: LinkedLicenseExtension,
-        configurations: List<Configuration>,
-        outputDir: File,
-    ) {
-        OverridesFileScaffold.ensureExists(extension.overridesFile)
-
-        val componentsByCoordinate = linkedMapOf<Coordinate, ModuleComponentIdentifier>()
-
-        configurations.forEach { configuration ->
-            collectResolvedComponents(configuration.incoming.resolutionResult.root).forEach { id ->
-                componentsByCoordinate.putIfAbsent(id.toCoordinate(), id)
-            }
+        task.sourceSetName.set(sourceSetName)
+        task.outputDir.set(outputDir)
+        task.includeAssets.set(includeAssets)
+        task.overridesFile.set(extension.overridesFile)
+        task.failOnCopyleft.set(extension.failOnCopyleft)
+        task.failOnSoftCopyleft.set(extension.failOnSoftCopyleft)
+        task.failOnUnknown.set(extension.failOnUnknown)
+        task.bestEffortLicenseFetch.set(extension.bestEffortLicenseFetch)
+        task.autoPopulate.set(extension.autoPopulate)
+        task.copyRequiredNotices.set(extension.copyRequiredNotices && includeNotices)
+        if (extension.copyRequiredNotices && includeNotices) {
+            task.noticesOutputFile.set(extension.noticesOutputFile)
+        }
+        if (npmNodeModulesDir != null && npmNodeModulesDir.isDirectory) {
+            task.npmNodeModulesDir.set(npmNodeModulesDir)
         }
 
-        generateCatalogFromComponents(
-            project = project,
-            extension = extension,
-            componentIds = componentsByCoordinate.values.toList(),
-            extraCoordinates = emptyList(),
-            extraPomInfo = emptyMap(),
-            configurations = configurations,
-            outputDir = outputDir,
-            includeAssets = true,
-            sourceSetName = "commonMain",
-        )
+        task.versionCatalogAliases.set(project.provider {
+            extractVersionCatalogAliases(project)
+        })
+
+        val resolvedInputs = project.provider {
+            val configs = configurationsProvider()
+            val componentsByCoordinate = linkedMapOf<Coordinate, ModuleComponentIdentifier>()
+            configs.forEach { config ->
+                collectResolvedComponents(config.incoming.resolutionResult.root).forEach { id ->
+                    componentsByCoordinate.putIfAbsent(id.toCoordinate(), id)
+                }
+            }
+            val componentIds = componentsByCoordinate.values.toList()
+            val coordinates = componentIds.map { it.toCoordinate() }
+            val pomInfos = resolvePomInfo(project, componentIds)
+            val jars = collectJarsByCoordinate(configs)
+            Triple(coordinates, pomInfos, jars)
+        }
+
+        task.coordinates.set(resolvedInputs.map { it.first })
+        task.pomInfos.set(resolvedInputs.map { it.second })
+        task.jarsByCoordinate.set(resolvedInputs.map { it.third })
+        task.jarFiles.from(task.jarsByCoordinate.map { it.values })
     }
 
-    private fun generateCatalogFromComponents(
-        project: Project,
-        extension: LinkedLicenseExtension,
-        componentIds: List<ModuleComponentIdentifier>,
-        /** Non-Maven coordinates (npm/CocoaPods/SPM, README §2.3) folded into the same pipeline. */
-        extraCoordinates: List<Coordinate>,
-        /** [PomInfo]-shaped license/repo info for each of [extraCoordinates]. */
-        extraPomInfo: Map<Coordinate, PomInfo>,
-        configurations: List<Configuration>,
-        outputDir: File,
-        includeAssets: Boolean,
-        /** README §2.1 step 7 — disambiguates the generated package per source set. */
+    fun generateCatalogFromTask(
+        logger: Logger,
         sourceSetName: String,
+        coordinates: List<Coordinate>,
+        pomInfos: Map<Coordinate, PomInfo>,
+        jarsByCoordinate: Map<Coordinate, File>,
+        versionCatalogAliases: Map<String, String>,
+        overridesFile: File,
+        failOnCopyleft: Boolean,
+        failOnSoftCopyleft: Boolean?,
+        failOnUnknown: Boolean,
+        includeAssets: Boolean,
+        bestEffortLicenseFetch: Boolean,
+        autoPopulate: Boolean,
+        copyRequiredNotices: Boolean,
+        npmNodeModulesDir: File?,
+        outputDir: File,
+        noticesOutputFile: File?,
     ) {
-        val coordinates = componentIds.map { it.toCoordinate() } + extraCoordinates
+        OverridesFileScaffold.ensureExists(overridesFile)
+
+        val npmPackageInfo = npmNodeModulesDir?.let { scanNpmPackageInfo(it) }.orEmpty()
+        val allCoordinates = coordinates + npmPackageInfo.keys.toList()
+        val extraPomInfo = npmPackageInfo.mapValues { (_, info) -> info.toPomInfo() }
+        val pomInfoCache = pomInfos + extraPomInfo
 
         val overrides =
-            TomlOverridesParser.parse(extension.overridesFile) { alias -> resolveVersionCatalogAlias(project, alias) }
+            TomlOverridesParser.parse(overridesFile) { alias ->
+                resolveVersionCatalogAlias(versionCatalogAliases, alias)
+            }
 
-        val pomInfoCache = resolvePomInfo(project, componentIds) + extraPomInfo
-
-        val jarsByCoordinate = collectJarsByCoordinate(configurations)
-        val noticesByCoordinate = coordinates.associateWith { coordinate ->
+        val noticesByCoordinate = allCoordinates.associateWith { coordinate ->
             val fromOverride = (overrides.overrides[coordinate.moduleId] as? OverrideSpec.BuiltIn)?.notice
-            val fromJar = jarsByCoordinate[coordinate]?.let { readNoticeFromJar(it) }?.let { stripLicenseBoilerplate(it) }?.takeIf { it.isNotBlank() }
+            val fromJar =
+                jarsByCoordinate[coordinate]?.let { readNoticeFromJar(it) }?.let { stripLicenseBoilerplate(it) }
+                    ?.takeIf { it.isNotBlank() }
             fromOverride ?: fromJar
         }
 
         val bestEffortFetch: ((String, String) -> KClass<out License>?)? =
-            if (extension.bestEffortLicenseFetch) {
+            if (bestEffortLicenseFetch) {
                 { repoUrl, ref -> BestEffortLicenseFetch.guessLicense(repoUrl, ref, ::fetchUrlBody) }
             } else {
                 null
@@ -144,28 +141,28 @@ internal object CatalogTaskExecution {
 
         val result =
             CatalogGenerator.resolve(
-                coordinates = coordinates,
+                coordinates = allCoordinates,
                 pomInfoOf = { pomInfoCache[it] ?: PomInfo(emptyList(), null) },
                 overrides = overrides,
-                failOnCopyleft = extension.failOnCopyleft,
-                failOnSoftCopyleft = extension.failOnSoftCopyleft,
-                failOnUnknown = extension.failOnUnknown,
+                failOnCopyleft = failOnCopyleft,
+                failOnSoftCopyleft = failOnSoftCopyleft,
+                failOnUnknown = failOnUnknown,
                 includeAssets = includeAssets,
                 bestEffortFetch = bestEffortFetch,
                 onBestGuess = { coordinate, kClass ->
                     if (!overrides.suppressBestGuessWarnings.containsKey(coordinate.moduleId)) {
-                        project.logger.warn(
+                        logger.warn(
                             "linkedlicense: best-effort guess for ${coordinate.moduleId} -> " +
                                 "${BuiltInLicenses.simpleNameOf(kClass)} (unverified - fetched from its repository " +
                                 "and pattern-matched, not read from a structured license field). Silence this " +
-                                "warning with a [suppress-best-guess-warnings] entry in ${extension.overridesFile.path} " +
+                                "warning with a [suppress-best-guess-warnings] entry in ${overridesFile.path} " +
                                 "once verified.",
                         )
                     }
                 },
-                autoPopulate = extension.autoPopulate,
+                autoPopulate = autoPopulate,
                 onUnresolvedPlaceholder = { coordinate, rawName ->
-                    project.logger.warn(
+                    logger.warn(
                         "linkedlicense: unresolved property placeholder in POM <name> '$rawName' for ${coordinate.moduleId} — falling back to '${coordinate.artifact}'.",
                     )
                 },
@@ -176,7 +173,7 @@ internal object CatalogTaskExecution {
             throw GradleException(
                 "generateLicenseCatalog found dependencies with no matched or overridden license:\n" +
                     result.unresolved.joinToString("\n") { "  - $it" } +
-                    "\n\nAdd an [overrides] or [ignored] entry for each in ${extension.overridesFile.path}, " +
+                    "\n\nAdd an [overrides] or [ignored] entry for each in ${overridesFile.path}, " +
                     "or set failOnUnknown = false to omit them instead.",
             )
         }
@@ -185,7 +182,7 @@ internal object CatalogTaskExecution {
             throw GradleException(
                 "generateLicenseCatalog found copyleft-licensed dependencies not allow-listed:\n" +
                     result.copyleftOffenders.joinToString("\n") { "  - $it" } +
-                    "\n\nAdd a [copyleft-allowed] entry in ${extension.overridesFile.path}, " +
+                    "\n\nAdd a [copyleft-allowed] entry in ${overridesFile.path}, " +
                     "or set failOnCopyleft = false.",
             )
         }
@@ -194,7 +191,7 @@ internal object CatalogTaskExecution {
             throw GradleException(
                 "generateLicenseCatalog found dependencies that violate [license-policy]:\n" +
                     result.policyOffenders.joinToString("\n") { "  - ${it.coordinate} (${it.licenseTypeId})" } +
-                    "\n\nAdjust the [license-policy] allow/block lists in ${extension.overridesFile.path}.",
+                    "\n\nAdjust the [license-policy] allow/block lists in ${overridesFile.path}.",
             )
         }
 
@@ -202,7 +199,7 @@ internal object CatalogTaskExecution {
             throw GradleException(
                 "generateLicenseCatalog found copyleft-licensed [assets] entries not allow-listed:\n" +
                     result.assetCopyleftOffenders.joinToString("\n") { "  - $it" } +
-                    "\n\nAdd a [copyleft-allowed] entry in ${extension.overridesFile.path}, " +
+                    "\n\nAdd a [copyleft-allowed] entry in ${overridesFile.path}, " +
                     "or set failOnCopyleft = false.",
             )
         }
@@ -211,12 +208,12 @@ internal object CatalogTaskExecution {
             throw GradleException(
                 "generateLicenseCatalog found [assets] entries that violate [license-policy]:\n" +
                     result.assetPolicyOffenders.joinToString("\n") { "  - ${it.assetKey} (${it.licenseTypeId})" } +
-                    "\n\nAdjust the [license-policy] allow/block lists in ${extension.overridesFile.path}.",
+                    "\n\nAdjust the [license-policy] allow/block lists in ${overridesFile.path}.",
             )
         }
 
-        if (extension.copyRequiredNotices) {
-            writeThirdPartyNotices(project, configurations, coordinates, overrides, extension.noticesOutputFile)
+        if (copyRequiredNotices && noticesOutputFile != null) {
+            writeThirdPartyNoticesFromJars(jarsByCoordinate, allCoordinates, overrides, noticesOutputFile)
         }
 
         val sourceSetPackageSegment = sourceSetName.lowercase()
@@ -229,6 +226,81 @@ internal object CatalogTaskExecution {
                 packageName = "dev.noahtownsend.linkedlicense.generated.$sourceSetPackageSegment",
                 entries = result.entries.map { it.second } + result.assetEntries.map { it.second },
             ),
+        )
+    }
+
+    fun generateCatalog(
+        project: Project,
+        extension: LinkedLicenseExtension,
+        configuration: Configuration,
+        outputDir: File,
+        includeAssets: Boolean,
+        npmNodeModulesDir: File? = null,
+        sourceSetName: String,
+    ) {
+        val componentIds = collectResolvedComponents(configuration.incoming.resolutionResult.root)
+        val coordinates = componentIds.map { it.toCoordinate() }
+        val pomInfos = resolvePomInfo(project, componentIds)
+        val jars = collectJarsByCoordinate(listOf(configuration))
+        val aliases = extractVersionCatalogAliases(project)
+
+        generateCatalogFromTask(
+            logger = project.logger,
+            sourceSetName = sourceSetName,
+            coordinates = coordinates,
+            pomInfos = pomInfos,
+            jarsByCoordinate = jars,
+            versionCatalogAliases = aliases,
+            overridesFile = extension.overridesFile,
+            failOnCopyleft = extension.failOnCopyleft,
+            failOnSoftCopyleft = extension.failOnSoftCopyleft,
+            failOnUnknown = extension.failOnUnknown,
+            includeAssets = includeAssets,
+            bestEffortLicenseFetch = extension.bestEffortLicenseFetch,
+            autoPopulate = extension.autoPopulate,
+            copyRequiredNotices = extension.copyRequiredNotices,
+            npmNodeModulesDir = npmNodeModulesDir,
+            outputDir = outputDir,
+            noticesOutputFile = if (extension.copyRequiredNotices) extension.noticesOutputFile else null,
+        )
+    }
+
+    fun generateUnionCatalog(
+        project: Project,
+        extension: LinkedLicenseExtension,
+        configurations: List<Configuration>,
+        outputDir: File,
+    ) {
+        val componentsByCoordinate = linkedMapOf<Coordinate, ModuleComponentIdentifier>()
+        configurations.forEach { config ->
+            collectResolvedComponents(config.incoming.resolutionResult.root).forEach { id ->
+                componentsByCoordinate.putIfAbsent(id.toCoordinate(), id)
+            }
+        }
+        val componentIds = componentsByCoordinate.values.toList()
+        val coordinates = componentIds.map { it.toCoordinate() }
+        val pomInfos = resolvePomInfo(project, componentIds)
+        val jars = collectJarsByCoordinate(configurations)
+        val aliases = extractVersionCatalogAliases(project)
+
+        generateCatalogFromTask(
+            logger = project.logger,
+            sourceSetName = "commonMain",
+            coordinates = coordinates,
+            pomInfos = pomInfos,
+            jarsByCoordinate = jars,
+            versionCatalogAliases = aliases,
+            overridesFile = extension.overridesFile,
+            failOnCopyleft = extension.failOnCopyleft,
+            failOnSoftCopyleft = extension.failOnSoftCopyleft,
+            failOnUnknown = extension.failOnUnknown,
+            includeAssets = true,
+            bestEffortLicenseFetch = extension.bestEffortLicenseFetch,
+            autoPopulate = extension.autoPopulate,
+            copyRequiredNotices = extension.copyRequiredNotices,
+            npmNodeModulesDir = null,
+            outputDir = outputDir,
+            noticesOutputFile = if (extension.copyRequiredNotices) extension.noticesOutputFile else null,
         )
     }
 
@@ -264,59 +336,88 @@ internal object CatalogTaskExecution {
 
         val parentPomCache = mutableMapOf<Coordinate, PomInfo>()
 
-        fun fetchParentPom(ref: ParentPomRef): PomInfo? {
-            val parentCoord = Coordinate(ref.groupId, ref.artifactId, ref.version)
-            parentPomCache[parentCoord]?.let { return it }
+        fun fetchParentPom(initialRef: ParentPomRef): PomInfo? {
+            var currentRef: ParentPomRef? = initialRef
+            val visited = mutableSetOf<Coordinate>()
+            var accumulatedInfo: PomInfo? = null
 
-            return runCatching {
-                val compId =
-                    org.gradle.internal.component.external.model.DefaultModuleComponentIdentifier.newId(
-                        org.gradle.api.internal.artifacts.DefaultModuleIdentifier.newId(ref.groupId, ref.artifactId),
-                        ref.version,
-                    )
-                val queryResult =
-                    project.dependencies
-                        .createArtifactResolutionQuery()
-                        .forComponents(compId)
-                        .withArtifacts(MavenModule::class.java, MavenPomArtifact::class.java)
-                        .execute()
-                val parentPomFile =
-                    queryResult.resolvedComponents.firstOrNull()
-                        ?.getArtifacts(MavenPomArtifact::class.java)
-                        ?.filterIsInstance<ResolvedArtifactResult>()
-                        ?.firstOrNull()
-                        ?.file
+            while (currentRef != null) {
+                val ref = currentRef
+                val parentCoord = Coordinate(ref.groupId, ref.artifactId, ref.version)
+                if (!visited.add(parentCoord)) break
 
-                if (parentPomFile != null) {
-                    val info = parsePomLicenses(parentPomFile)
-                    parentPomCache[parentCoord] = info
-                    info
-                } else {
-                    null
+                val parentInfo =
+                    parentPomCache[parentCoord] ?: runCatching {
+                        val compId =
+                            org.gradle.internal.component.external.model.DefaultModuleComponentIdentifier.newId(
+                                org.gradle.api.internal.artifacts.DefaultModuleIdentifier.newId(ref.groupId, ref.artifactId),
+                                ref.version,
+                            )
+                        val queryResult =
+                            project.dependencies
+                                .createArtifactResolutionQuery()
+                                .forComponents(compId)
+                                .withArtifacts(MavenModule::class.java, MavenPomArtifact::class.java)
+                                .execute()
+                        val parentPomFile =
+                            queryResult.resolvedComponents.firstOrNull()
+                                ?.getArtifacts(MavenPomArtifact::class.java)
+                                ?.filterIsInstance<ResolvedArtifactResult>()
+                                ?.firstOrNull()
+                                ?.file
+
+                        if (parentPomFile != null) {
+                            val info = parsePomLicenses(parentPomFile)
+                            parentPomCache[parentCoord] = info
+                            info
+                        } else {
+                            null
+                        }
+                    }.getOrNull() ?: break
+
+                accumulatedInfo =
+                    if (accumulatedInfo == null) {
+                        parentInfo
+                    } else {
+                        accumulatedInfo.copy(
+                            licenses = accumulatedInfo.licenses.ifEmpty { parentInfo.licenses },
+                            organizationName = accumulatedInfo.organizationName ?: parentInfo.organizationName,
+                            scmUrl = accumulatedInfo.scmUrl ?: parentInfo.scmUrl,
+                            developers = accumulatedInfo.developers.ifEmpty { parentInfo.developers },
+                            properties = parentInfo.properties + accumulatedInfo.properties,
+                        )
+                    }
+
+                if (accumulatedInfo.licenses.isNotEmpty()) {
+                    break
                 }
-            }.getOrNull()
+                currentRef = parentInfo.parentRef
+            }
+            return accumulatedInfo
         }
 
         val finalPoms = mutableMapOf<Coordinate, PomInfo>()
 
-        parsedPoms.forEach { (coord, initialInfo) ->
-            var currentInfo = initialInfo
-            val visited = mutableSetOf(coord.toString())
-            var depth = 0
-            val maxDepth = 10
-
-            while (depth < maxDepth) {
-                val parentRef = currentInfo.parentRef ?: break
-                val parentKey = "${parentRef.groupId}:${parentRef.artifactId}:${parentRef.version}"
-                if (!visited.add(parentKey)) {
-                    break
+        parsedPoms.forEach { (coord, info) ->
+            val mergedInfo =
+                if (info.licenses.isEmpty() && info.parentRef != null) {
+                    val parentInfo = fetchParentPom(info.parentRef)
+                    if (parentInfo != null) {
+                        info.copy(
+                            licenses = parentInfo.licenses,
+                            organizationName = info.organizationName ?: parentInfo.organizationName,
+                            scmUrl = info.scmUrl ?: parentInfo.scmUrl,
+                            developers = info.developers.ifEmpty { parentInfo.developers },
+                            properties = parentInfo.properties + info.properties,
+                        )
+                    } else {
+                        info
+                    }
+                } else {
+                    info
                 }
-                val parentInfo = fetchParentPom(parentRef) ?: break
-                currentInfo = currentInfo.withParent(parentInfo)
-                depth++
-            }
 
-            finalPoms[coord] = currentInfo.interpolated(coord)
+            finalPoms[coord] = mergedInfo.interpolated(coord)
         }
 
         return finalPoms
@@ -355,15 +456,12 @@ internal object CatalogTaskExecution {
         return jarsByCoordinate
     }
 
-    private fun writeThirdPartyNotices(
-        project: Project,
-        configurations: List<Configuration>,
+    private fun writeThirdPartyNoticesFromJars(
+        jarsByCoordinate: Map<Coordinate, File>,
         coordinates: List<Coordinate>,
         overrides: OverridesConfig,
         outputFile: File,
     ) {
-        val jarsByCoordinate = collectJarsByCoordinate(configurations)
-
         val notices =
             coordinates
                 .filterNot { overrides.ignored.containsKey(it.moduleId) }
@@ -382,30 +480,44 @@ internal object CatalogTaskExecution {
         outputFile.writeText(renderThirdPartyNotices(notices))
     }
 
+    fun extractVersionCatalogAliases(project: Project): Map<String, String> {
+        val catalogs = project.extensions.findByType(VersionCatalogsExtension::class.java) ?: return emptyMap()
+        val aliases = mutableMapOf<String, String>()
+        catalogs.catalogNames.forEach { catalogName ->
+            catalogs.find(catalogName).ifPresent { catalog ->
+                catalog.libraryAliases.forEach { alias ->
+                    catalog.findLibrary(alias).ifPresent { lib ->
+                        val module = lib.get().module
+                        val coord = "${module.group}:${module.name}"
+                        aliases["$catalogName.$alias"] = coord
+                        aliases["$catalogName.${alias.replace('-', '.')}"] = coord
+                    }
+                }
+            }
+        }
+        return aliases
+    }
+
+    fun resolveVersionCatalogAlias(
+        aliases: Map<String, String>,
+        rawKey: String,
+    ): String {
+        aliases[rawKey]?.let { return it }
+        val parts = rawKey.split(".")
+        if (parts.size >= 2) {
+            val catalogName = parts[0]
+            val aliasWithDashes = parts.drop(1).joinToString("-")
+            aliases["$catalogName.$aliasWithDashes"]?.let { return it }
+            val aliasWithDots = parts.drop(1).joinToString(".")
+            aliases["$catalogName.$aliasWithDots"]?.let { return it }
+        }
+        throw GradleException("Unknown version catalog alias '$rawKey' (available: ${aliases.keys}).")
+    }
+
     fun resolveVersionCatalogAlias(
         project: Project,
         rawKey: String,
-    ): String {
-        val parts = rawKey.split(".")
-
-        if (parts.size < 2) {
-            throw GradleException("Malformed version-catalog alias '$rawKey' — expected e.g. 'libs.okio'.")
-        }
-
-        val catalogName = parts[0]
-        val alias = parts.drop(1).joinToString("-")
-
-        val catalogs = project.extensions.getByType(VersionCatalogsExtension::class.java)
-        val catalog =
-            catalogs.find(catalogName).orElse(null)
-                ?: throw GradleException("Unknown version catalog '$catalogName' referenced by '$rawKey'.")
-        val library =
-            catalog.findLibrary(alias).orElse(null)
-                ?: throw GradleException("Unknown alias '$alias' in catalog '$catalogName' referenced by '$rawKey'.")
-        val module = library.get().module
-
-        return "${module.group}:${module.name}"
-    }
+    ): String = resolveVersionCatalogAlias(extractVersionCatalogAliases(project), rawKey)
 
     /** A real HTTPS GET, used only when `bestEffortLicenseFetch = true` (README §2.3). */
     private fun fetchUrlBody(url: String): String? =

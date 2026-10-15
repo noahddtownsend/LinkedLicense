@@ -25,16 +25,27 @@ internal object NpmNodeModulesLocator {
         project: Project,
         sourceSetName: String,
     ): File? {
+        if (!sourceSetName.startsWith("js", ignoreCase = true) && !sourceSetName.startsWith("wasmJs", ignoreCase = true)) {
+            return null
+        }
+
         val rootBuildDir = project.rootProject.layout.buildDirectory.get().asFile
         val projectBuildDir = project.layout.buildDirectory.get().asFile
 
         val candidates =
-            listOfNotNull(
-                File(rootBuildDir, "js/node_modules"),
-                if (sourceSetName.startsWith("wasmJs")) File(rootBuildDir, "wasm/node_modules") else null,
-                File(projectBuildDir, "js/node_modules"),
-                if (sourceSetName.startsWith("wasmJs")) File(projectBuildDir, "wasm/node_modules") else null,
-            )
+            if (sourceSetName.startsWith("wasmJs", ignoreCase = true)) {
+                listOfNotNull(
+                    File(rootBuildDir, "wasm/node_modules"),
+                    File(projectBuildDir, "wasm/node_modules"),
+                    File(rootBuildDir, "js/node_modules"),
+                    File(projectBuildDir, "js/node_modules"),
+                )
+            } else {
+                listOfNotNull(
+                    File(rootBuildDir, "js/node_modules"),
+                    File(projectBuildDir, "js/node_modules"),
+                )
+            }
 
         return candidates.firstOrNull { it.isDirectory }
     }

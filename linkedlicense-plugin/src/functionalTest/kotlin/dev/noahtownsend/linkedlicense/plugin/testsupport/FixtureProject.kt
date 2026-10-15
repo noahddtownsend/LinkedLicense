@@ -75,8 +75,12 @@ class FixtureProject(
         )
     }
 
-    fun writeLocalProperties(sdkDir: String = "/Users/noahtownsend/Library/Android/sdk") {
-        File(projectDir, "local.properties").writeText("sdk.dir=$sdkDir\n")
+    fun writeLocalProperties(sdkDir: String? = null) {
+        val effectiveSdk = sdkDir
+            ?: System.getenv("ANDROID_HOME")
+            ?: System.getenv("ANDROID_SDK_ROOT")
+            ?: "/Users/noahtownsend/Library/Android/sdk"
+        File(projectDir, "local.properties").writeText("sdk.dir=$effectiveSdk\n")
     }
 
     fun writeBuildFile(
@@ -233,6 +237,62 @@ class FixtureProject(
             |        }
             |        jvmMain.dependencies {
             ${jvmDependencyCoordinates.joinToString("\n") { "|            implementation(\"$it\")" }}
+            |        }
+            |    }
+            |}
+            |
+            $linkedLicenseBlock
+            """.trimMargin(),
+        )
+    }
+
+    fun writeMultiplatformAndroidBuildFile(
+        androidDependencyCoordinates: List<String> = emptyList(),
+        jvmDependencyCoordinates: List<String> = emptyList(),
+        commonDependencyCoordinates: List<String> = emptyList(),
+        linkedLicenseBlock: String = "",
+    ) {
+        val pluginVersion = System.getProperty("linkedlicense.version") ?: "0.1.0"
+        val functionalTestRepoDir = System.getProperty("linkedlicense.functionalTestRepo")
+
+        File(projectDir, "build.gradle.kts").writeText(
+            """
+            |import java.net.URI
+            |
+            |plugins {
+            |    id("com.android.library") version "8.13.2"
+            |    kotlin("multiplatform") version "2.3.21"
+            |    id("dev.noahtownsend.linkedlicense") version "$pluginVersion"
+            |}
+            |
+            |repositories {
+            |    google()
+            |    maven { url = URI.create("${repo.dir.toURI()}") }
+            ${if (functionalTestRepoDir != null) "|    maven { url = URI.create(\"${File(functionalTestRepoDir).toURI()}\") }" else ""}
+            |    mavenCentral()
+            |}
+            |
+            |android {
+            |    namespace = "com.example.kmpandroid"
+            |    compileSdk = 34
+            |    defaultConfig {
+            |        minSdk = 24
+            |    }
+            |}
+            |
+            |kotlin {
+            |    jvm()
+            |    androidTarget()
+            |
+            |    sourceSets {
+            |        commonMain.dependencies {
+            ${commonDependencyCoordinates.joinToString("\n") { "|            implementation(\"$it\")" }}
+            |        }
+            |        jvmMain.dependencies {
+            ${jvmDependencyCoordinates.joinToString("\n") { "|            implementation(\"$it\")" }}
+            |        }
+            |        androidMain.dependencies {
+            ${androidDependencyCoordinates.joinToString("\n") { "|            implementation(\"$it\")" }}
             |        }
             |    }
             |}
