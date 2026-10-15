@@ -48,4 +48,5 @@ if [ -n "$GRADLE_PUBLISH_SECRET_VALUE" ]; then
     export GRADLE_PUBLISH_SECRET="$GRADLE_PUBLISH_SECRET_VALUE"
 fi
 
-exec gradle "$@"
+GRADLE_BIN="${GRADLE_BIN:-./gradlew}"
+exec "$GRADLE_BIN" "$@"
