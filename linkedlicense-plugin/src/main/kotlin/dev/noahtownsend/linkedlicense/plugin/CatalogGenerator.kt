@@ -184,7 +184,7 @@ object CatalogGenerator {
                     entries +=
                         coordinate to
                         CatalogEntry.BuiltIn(
-                            buildInExpression(
+                            expression = buildInExpression(
                                 kClass = resolvedKClass,
                                 elementLicensed = resolvedElementLicensed,
                                 author = resolvedAuthor,
@@ -193,6 +193,8 @@ object CatalogGenerator {
                                 licenseName = overrideSpec.licenseName,
                                 notice = resolvedNotice,
                             ),
+                            elementLicensed = resolvedElementLicensed,
+                            author = resolvedAuthor,
                         )
                 }
 
@@ -246,7 +248,7 @@ object CatalogGenerator {
                     entries +=
                         coordinate to
                         CatalogEntry.BuiltIn(
-                            buildInExpression(
+                            expression = buildInExpression(
                                 kClass = matched,
                                 elementLicensed = resolvedElementLicensed,
                                 author = resolvedAuthor,
@@ -254,6 +256,8 @@ object CatalogGenerator {
                                 text = null,
                                 notice = resolvedNotice,
                             ),
+                            elementLicensed = resolvedElementLicensed,
+                            author = resolvedAuthor,
                         )
                 }
             }
@@ -294,19 +298,23 @@ object CatalogGenerator {
                         continue
                     }
 
+                    val resolvedElem = spec.elementLicensed ?: assetKey
+                    val resolvedAuth = spec.author ?: assetKey
                     assetEntries +=
                         assetKey to
                         CatalogEntry.BuiltIn(
-                            buildInExpression(
+                            expression = buildInExpression(
                                 kClass = kClass,
-                                elementLicensed = spec.elementLicensed ?: assetKey,
-                                author = spec.author ?: assetKey,
+                                elementLicensed = resolvedElem,
+                                author = resolvedAuth,
                                 url = spec.url,
                                 text = spec.text,
                                 isAsset = true,
                                 licenseName = spec.licenseName,
                                 notice = spec.notice,
                             ),
+                            elementLicensed = resolvedElem,
+                            author = resolvedAuth,
                         )
                 }
             }

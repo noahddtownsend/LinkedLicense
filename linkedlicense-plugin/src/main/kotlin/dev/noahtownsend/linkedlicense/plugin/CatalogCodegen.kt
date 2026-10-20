@@ -5,6 +5,8 @@ sealed class CatalogEntry {
     /** A built-in [dev.noahtownsend.linkedlicense.License] instantiation expression. */
     data class BuiltIn(
         val expression: String,
+        val elementLicensed: String? = null,
+        val author: String? = null,
     ) : CatalogEntry()
 
     /** A reference to a user-declared `custom:` symbol — codegen imports and references it directly. */
@@ -12,6 +14,28 @@ sealed class CatalogEntry {
         val fullyQualifiedName: String,
     ) : CatalogEntry()
 }
+
+private val elementLicensedRegex = Regex("""elementLicensed\s*=\s*"([^"]+)"""")
+private val authorRegex = Regex("""author\s*=\s*"([^"]+)"""")
+
+fun List<CatalogEntry>.distinctByNameAndAuthor(): List<CatalogEntry> =
+    distinctBy { entry ->
+        when (entry) {
+            is CatalogEntry.BuiltIn -> {
+                val elem = entry.elementLicensed
+                    ?: elementLicensedRegex.find(entry.expression)?.groupValues?.get(1)
+                val auth = entry.author
+                    ?: authorRegex.find(entry.expression)?.groupValues?.get(1)
+
+                if (elem != null && auth != null) {
+                    "${elem.lowercase()}|${auth.lowercase()}"
+                } else {
+                    entry.expression
+                }
+            }
+            is CatalogEntry.CustomRef -> entry.fullyQualifiedName
+        }
+    }
 
 private fun String.kotlinStringLiteral(): String =
     "\"" +
@@ -67,14 +91,16 @@ fun renderGeneratedLicensesFile(
     packageName: String,
     entries: List<CatalogEntry>,
 ): String {
+    val deduplicatedEntries = entries.distinctByNameAndAuthor()
+
     val imports =
         buildList {
             add("import dev.noahtownsend.linkedlicense.License")
-            entries.filterIsInstance<CatalogEntry.CustomRef>().forEach { add("import ${it.fullyQualifiedName}") }
+            deduplicatedEntries.filterIsInstance<CatalogEntry.CustomRef>().forEach { add("import ${it.fullyQualifiedName}") }
         }.distinct().sorted()
 
     val listItems =
-        entries.joinToString(",\n") { entry ->
+        deduplicatedEntries.joinToString(",\n") { entry ->
             val expr =
                 when (entry) {
                     is CatalogEntry.BuiltIn -> entry.expression
