@@ -224,7 +224,7 @@ internal object CatalogTaskExecution {
         generatedFile.writeText(
             renderGeneratedLicensesFile(
                 packageName = "dev.noahtownsend.linkedlicense.generated.$sourceSetPackageSegment",
-                entries = result.entries.map { it.second } + result.assetEntries.map { it.second },
+                entries = (result.entries.map { it.second } + result.assetEntries.map { it.second }).distinct(),
             ),
         )
     }
